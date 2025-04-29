@@ -12,7 +12,16 @@ public class TOTP {
     // de tempo a ser adotado (default = 30 segundos). Deve decodificar a
     // chave secreta e armazenar em key. Em caso de erro, gera Exception.
     public TOTP(String base32EncodedSecret, long timeStepInSeconds) throws Exception {
+        
+        Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);
+        this.key = base32.fromString(base32EncodedSecret);
+        this.timeStepInSeconds = timeStepInSeconds;
+
+        if (this.key == null) {
+            throw new Exception("Erro ao decodificar a chave secreta.");
+        }
     }
+    
     // Recebe o HASH HMAC-SHA1 e determina o código TOTP de 6 algarismos
     // decimais, prefixado com zeros quando necessário.
     private String getTOTPCodeFromHash(byte[] hash) {
