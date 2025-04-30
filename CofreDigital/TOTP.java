@@ -1,3 +1,8 @@
+/*
+  Lívia Lutz dos Santos, 2211055
+  Ricardo Bastos Leta Vieira, 2110526
+*/
+
 package CofreDigital;
 
 import javax.crypto.Mac;
