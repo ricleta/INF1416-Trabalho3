@@ -115,4 +115,17 @@ public class TOTP {
         return matches;
     }
 
+    public long getTimeStepInSeconds() {
+        return timeStepInSeconds;
+    }
+    public void setTimeStepInSeconds(long timeStepInSeconds) {
+        this.timeStepInSeconds = timeStepInSeconds;
+    }
+    public byte[] getKeyByteArray() {
+        return key;
+    }
+    public void setKey(byte[] key) {
+        this.key = key;
+    }
+
 }
