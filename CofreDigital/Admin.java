@@ -12,10 +12,36 @@ public class Admin extends User {
         super(email, senhaPessoal, token);
         this.fraseSecreta = fraseSecreta;
     }
+
     public String getFraseSecreta() {
         return fraseSecreta;
     }
+
     public void setFraseSecreta(String fraseSecreta) {
         this.fraseSecreta = fraseSecreta;
+    }
+
+    public void setemail(String email) {
+        super.setEmail(email);
+    }
+
+    public String getemail() {
+       return super.getEmail();
+    }
+
+    public void setSenhaPessoal(String senhaPessoal) {
+        super.setSenhaPessoal(senhaPessoal);
+    }
+
+    public String getSenhaPessoal() {
+        return super.getSenhaPessoal();
+    }
+
+    public void setToken(String token) {
+        super.setToken(token);
+    }
+
+    public String getToken() {
+        return super.getToken();
     }
 }
