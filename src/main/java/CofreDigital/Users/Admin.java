@@ -3,7 +3,7 @@
   Ricardo Bastos Leta Vieira, 2110526
 */
 
-package CofreDigital;
+package CofreDigital.Users;
 
 public class Admin extends User {
     private String fraseSecreta;

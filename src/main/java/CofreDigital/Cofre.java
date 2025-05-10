@@ -11,7 +11,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;*/
 
-public class cofre{
+import CofreDigital.DB.DBconnect;
+
+public class Cofre{
     public static void main(String[] args) throws Exception {   
         
         //when running for the 1st time, register admin
@@ -27,7 +29,8 @@ public class cofre{
         //3rd step
     
         //if everything is ok, show menu
-            
+        
+        DBconnect db = new DBconnect();
     }
 }
 

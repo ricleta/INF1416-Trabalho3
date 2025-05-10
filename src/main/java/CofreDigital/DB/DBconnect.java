@@ -3,21 +3,22 @@
   Ricardo Bastos Leta Vieira, 2110526
 */
 
-package CofreDigital;
+package CofreDigital.DB;
+
+import CofreDigital.Users.User;
+import CofreDigital.Users.Admin;
 
 import java.sql.*;
 
 public class DBconnect {
-    public static void main(String[] args) {
+    private static final String DB_URL = "jdbc:sqlite:cofre.db";
+
+    public DBconnect() {
 
         try{
-            
-            //aqui tem q usar o nome do driver
-            Class.forName("org.sqlite.JDBC");
-
             //establish connection
             //os nomes provavelmente estão errados
-            Connection con = DriverManager.getConnection("jdbc:sqlite:cofre.db");
+            Connection con = DriverManager.getConnection(DB_URL);
 
             if (con != null){
                 System.out.println("Connected");  
@@ -41,11 +42,9 @@ public class DBconnect {
     }
 
 
-    public static void createTable(Connection con, Statement stmt) {
+    public void createTable(Connection con, Statement stmt) {
         try {
             
-            Class.forName("org.sqlite.JDBC");
-
             //cria a tabela users
             String queryCreateUser = "CREATE TABLE IF NOT EXISTS users (" +
                 " email TEXT NOT NULL," +
@@ -70,7 +69,7 @@ public class DBconnect {
         }
     }
 
-    public static void insertUser(Connection con, User u) {
+    public void insertUser(Connection con, User u) {
         try {
             String queryInsertUser = "INSERT INTO users (email, senhaPessoal, token) VALUES (?, ?, ?)";
             PreparedStatement pstmt = con.prepareStatement(queryInsertUser);
@@ -86,7 +85,7 @@ public class DBconnect {
         }
     }
 
-    public static void insertAdmin(Connection con, Admin a) {
+    public void insertAdmin(Connection con, Admin a) {
         try {
             String queryInsertAdmin = "INSERT INTO admin (email, senhaPessoal, token, fraseSecreta) VALUES (?, ?, ?, ?)";
             PreparedStatement pstmt = con.prepareStatement(queryInsertAdmin);
