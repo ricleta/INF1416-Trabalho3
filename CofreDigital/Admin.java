@@ -44,4 +44,6 @@ public class Admin extends User {
     public String getToken() {
         return super.getToken();
     }
+
+    public boolean validaFraseSecreta() {return false;}
 }

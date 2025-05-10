@@ -51,6 +51,14 @@ public class User {
     public void setToken(String token) {
         this.token = token;
     }
+
+    public boolean authlogin(){
+        return false;
+    }
+
+    public boolean authsenhaPessoal(){return false;}
+
+    public boolean authtoken(){return false;}
 }
 
 
