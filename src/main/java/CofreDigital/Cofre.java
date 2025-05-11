@@ -6,12 +6,15 @@
 
 package CofreDigital;
 
+import java.util.Scanner;
+
 /*import javax.sql.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;*/
 
 import CofreDigital.DB.DB;
+import CofreDigital.UI.TelaPrincipal;
 
 public class Cofre{
     public static void main(String[] args) throws Exception {   
@@ -31,6 +34,11 @@ public class Cofre{
         //if everything is ok, show menu
         
         DB db = new DB();
+
+        while (true) {
+          TelaPrincipal tela = new TelaPrincipal("admin", "admins", "Admin", 1);
+          tela.setVisible(true);
+        }
     }
 }
 

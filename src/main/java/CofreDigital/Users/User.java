@@ -19,6 +19,7 @@ public class User {
     private String email;
     private String senhaPessoal;
     private String fraseSecreta;
+    private int total_de_acessos;
 
     //from Google authenticator
     private String token;
@@ -62,6 +63,14 @@ public class User {
         this.fraseSecreta = fraseSecreta;
     }
 
+    public int getTotal_de_acessos() {
+        return total_de_acessos;
+    }
+
+    public void setTotal_de_acessos(int total_de_acessos) {
+        this.total_de_acessos = total_de_acessos;
+    }
+    
     public boolean authlogin(){
         return false;
     }

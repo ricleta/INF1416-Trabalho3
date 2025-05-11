@@ -17,6 +17,9 @@ import java.io.IOException;
 public class DB {
     private static final String DB_URL = "jdbc:sqlite:cofre.db";
     private static final String CSV_FILE_PATH = "/CofreDigital/DB/mensagens.csv";
+    private static final String [] GROUP_NAMES = {"admins", "usuarios"};
+    private static final String [] GROUP_IDS = {"1", "2"}; // IDs dos grupos, 1 para admins e 2 para usuarios
+
 
     public DB() {
 
@@ -54,7 +57,14 @@ public class DB {
 
         // se a tabela de mensagens estiver vazia, preenche-la com mensagens do .csv
         if (isMessagesTableEmpty(con)) {
+            System.out.println("Tabela de mensagens vazia, preenchendo com dados do CSV...");
             fillMessagesTable(con);
+        }
+
+        // se a tabela de grupos estiver vazia, preenche-la com grupos default
+        if (isGroupsTableEmpty(con)) {
+            System.out.println("Tabela de grupos vazia, preenchendo com grupos default...");
+            fillGroupsTable(con);
         }
     }
 
@@ -157,6 +167,21 @@ public class DB {
         return false;
     }
 
+    private boolean isGroupsTableEmpty(Connection con) {
+        String query = "SELECT EXISTS (SELECT 1 FROM Grupos LIMIT 1)";
+
+        try (Statement stmt = con.createStatement()) {
+            // Get the count of rows in the Grupos table
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Retorna falso se pelo menos uma linha existe
+            return rs.next() && rs.getInt(1) == 0;
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return false;
+    }
+
     private void fillMessagesTable(Connection con) {
         String queryInsertMessage = "INSERT INTO Mensagens (MID, conteudo) VALUES (?, ?)";
 
@@ -186,18 +211,38 @@ public class DB {
         }
     }
 
-    public void insertUser(Connection con, User u) {
-        String queryInsertUser = "INSERT INTO users (email, senhaPessoal, token) VALUES (?, ?, ?)";
+    private void fillGroupsTable(Connection con) {
+        String queryInsertGroup = "INSERT INTO Grupos (GID, nome) VALUES (?, ?)";
 
-        try (PreparedStatement pstmt = con.prepareStatement(queryInsertUser))
-        {
-            pstmt.setString(1, u.getEmail());
-            pstmt.setString(2, u.getSenhaPessoal());
-            pstmt.setString(3, u.getToken());
-            pstmt.executeUpdate();
-        } 
-        catch (SQLException e) {
+        try (PreparedStatement pstmt = con.prepareStatement(queryInsertGroup)) {
+            for (int i = 0; i < GROUP_NAMES.length; i++) {
+                pstmt.setString(1, GROUP_IDS[i]);
+                pstmt.setString(2, GROUP_NAMES[i]);
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
+    }
+
+    // public void addUser(User user) {
+    //     String queryInsertUser = "INSERT INTO Usuarios (UID, email, senhaPessoal, KID, token) VALUES (?, ?, ?, ?, ?)";
+
+    //     try (Connection con = DriverManager.getConnection(DB_URL);
+    //             PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
+    //         pstmt.setString(1, user.getUid());
+    //         pstmt.setString(2, user.getEmail());
+    //         pstmt.setString(3, user.getSenhaPessoal());
+    //         pstmt.setString(4, user.getKID());
+    //         pstmt.setString(5, user.getToken());
+    //         pstmt.executeUpdate();
+    //     } catch (SQLException e) {
+    //         System.err.println("Error: " + e.getMessage());
+    //     }
+    // }
+
+    public void addAdmin(User admin)
+    {
+        // TODO
     }
 }
