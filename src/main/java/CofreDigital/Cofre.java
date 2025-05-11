@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;*/
 
-import CofreDigital.DB.DBconnect;
+import CofreDigital.DB.DB;
 
 public class Cofre{
     public static void main(String[] args) throws Exception {   
@@ -30,7 +30,7 @@ public class Cofre{
     
         //if everything is ok, show menu
         
-        DBconnect db = new DBconnect();
+        DB db = new DB();
     }
 }
 

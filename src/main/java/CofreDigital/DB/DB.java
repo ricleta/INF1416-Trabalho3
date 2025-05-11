@@ -1,0 +1,203 @@
+/*
+  Lívia Lutz dos Santos, 2211055
+  Ricardo Bastos Leta Vieira, 2110526
+*/
+
+package CofreDigital.DB;
+
+import CofreDigital.Users.User;
+
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.sql.*;
+import java.io.IOException;
+
+public class DB {
+    private static final String DB_URL = "jdbc:sqlite:cofre.db";
+    private static final String CSV_FILE_PATH = "/CofreDigital/DB/mensagens.csv";
+
+    public DB() {
+
+        try (Connection con = DriverManager.getConnection(DB_URL))
+        {
+            if (con != null){
+                System.out.println("Connected");  
+            }                       
+            else{
+                System.out.println("Not Connected");
+                
+            }
+            
+            setupTables(con);
+        }
+        catch (Exception e) {
+            // Handle any errors that may have occurred
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    // TODO
+    // Verifica se campos das tabelas estão corretos, especialmente os tipos
+    private void setupTables(Connection con) {
+        /*
+            Usamos TEXT para UID, KID e MID
+            Enquanto usamos INTEGER PRIMARY KEY para GID e RID 
+            porque SQLite os incrementa automaticamente por default. 
+        */
+        createUserTable(con);
+        createKeyChainTable(con);
+        createGroupsTable(con);
+        createMessageTable(con);
+        createLogTable(con);
+
+        // se a tabela de mensagens estiver vazia, preenche-la com mensagens do .csv
+        if (isMessagesTableEmpty(con)) {
+            fillMessagesTable(con);
+        }
+    }
+
+    private void createUserTable(Connection con) {
+        String queryCreateUser =
+            "CREATE TABLE IF NOT EXISTS Usuarios (" +
+            "UID TEXT PRIMARY KEY, " +
+            "email TEXT NOT NULL, " +
+            "senhaPessoal TEXT NOT NULL, " +
+            "KID TEXT NOT NULL, " +
+            "token TEXT NOT NULL, " +
+            "FOREIGN KEY (KID) REFERENCES Chaveiro(KID)" +
+            ");";
+
+        try (Statement stmt = con.createStatement()) {
+            stmt.executeUpdate(queryCreateUser);
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void createKeyChainTable(Connection con) {
+        // PEM é texto em base64, então usamos TEXT
+        // chavePrivada é um BLOB porque está em binário
+        String queryCreateKeyChain =
+            "CREATE TABLE IF NOT EXISTS Chaveiro (" +
+            "KID TEXT PRIMARY KEY, " +
+            "UID TEXT NOT NULL, " +
+            "certificadoDigital TEXT NOT NULL, " +
+            "chavePrivada BLOB NOT NULL, " +
+            "FOREIGN KEY (UID) REFERENCES Usuarios(UID)" +
+            ");";
+
+        try (Statement stmt = con.createStatement()) {
+            stmt.executeUpdate(queryCreateKeyChain);
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void createGroupsTable(Connection con) {
+        String queryCreateGroups =
+            "CREATE TABLE IF NOT EXISTS Grupos (" +
+            "GID INTEGER PRIMARY KEY, " +
+            "nome TEXT" +
+            ");";
+
+        try (Statement stmt = con.createStatement()) {
+            stmt.executeUpdate(queryCreateGroups);
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void createMessageTable(Connection con) {
+        String queryCreateMessages =
+            "CREATE TABLE IF NOT EXISTS Mensagens (" +
+            "MID TEXT PRIMARY KEY, " +
+            "conteudo TEXT NOT NULL" +
+            ");";
+
+        try (Statement stmt = con.createStatement()) {
+            stmt.executeUpdate(queryCreateMessages);
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void createLogTable(Connection con) {
+        String queryCreateLogs =
+            "CREATE TABLE IF NOT EXISTS Registros (" +
+            "RID INTEGER PRIMARY KEY, " +
+            "dataHora TEXT NOT NULL, " +
+            "UID TEXT, " +
+            "MID TEXT, " +
+            "FOREIGN KEY (UID) REFERENCES Usuarios(UID), " +
+            "FOREIGN KEY (MID) REFERENCES Mensagens(MID)" +
+            ");";
+
+        try (Statement stmt = con.createStatement()) {
+            stmt.executeUpdate(queryCreateLogs);
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+
+    private boolean isMessagesTableEmpty(Connection con) {
+        String query = "SELECT EXISTS (SELECT 1 FROM Mensagens LIMIT 1)";
+
+        try (Statement stmt = con.createStatement()) {
+            // Get the count of rows in the Mensagens table
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Retorna falso se pelo menos uma linha existe
+            return rs.next() && rs.getInt(1) == 0;
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    private void fillMessagesTable(Connection con) {
+        String queryInsertMessage = "INSERT INTO Mensagens (MID, conteudo) VALUES (?, ?)";
+
+        try (PreparedStatement pstmt = con.prepareStatement(queryInsertMessage);
+                InputStream inputStream = getClass().getResourceAsStream(CSV_FILE_PATH);
+                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            
+            // Le mensagens do arquivo CSV e insere na tabela Mensagens
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",", 2);
+                String mid = values[0].strip();
+                String conteudo = values[1].strip();
+                conteudo = conteudo.replaceAll("\"", ""); // Remove aspas
+
+                // Substitui caracteres especiais para tornar mais facil exibir mensagens depois
+                // evitando confusao com tags XML ou HTML
+                conteudo = conteudo.replaceAll("<", "{"); // Substitui < por {
+                conteudo = conteudo.replaceAll(">", "}"); // Substitui > por }
+                
+                pstmt.setString(1, mid);
+                pstmt.setString(2, conteudo);
+                pstmt.executeUpdate();
+            }
+        } catch (IOException | SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    public void insertUser(Connection con, User u) {
+        String queryInsertUser = "INSERT INTO users (email, senhaPessoal, token) VALUES (?, ?, ?)";
+
+        try (PreparedStatement pstmt = con.prepareStatement(queryInsertUser))
+        {
+            pstmt.setString(1, u.getEmail());
+            pstmt.setString(2, u.getSenhaPessoal());
+            pstmt.setString(3, u.getToken());
+            pstmt.executeUpdate();
+        } 
+        catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+}

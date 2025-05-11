@@ -18,13 +18,15 @@ import java.io.IOException;*/
 public class User {
     private String email;
     private String senhaPessoal;
-    
+    private String fraseSecreta;
+
     //from Google authenticator
     private String token;
 
-    public User(String email,String senhaPessoal,String token){
+    public User(String email, String senhaPessoal, String token, String fraseSecreta) {
         this.email = email;
         this.senhaPessoal = senhaPessoal;
+        this.fraseSecreta = fraseSecreta;
         this.token = token;
     }
 
@@ -52,6 +54,14 @@ public class User {
         this.token = token;
     }
 
+    public String getFraseSecreta() {
+        return fraseSecreta;
+    }
+
+    public void setFraseSecreta(String fraseSecreta) {
+        this.fraseSecreta = fraseSecreta;
+    }
+
     public boolean authlogin(){
         return false;
     }
@@ -59,6 +69,8 @@ public class User {
     public boolean authsenhaPessoal(){return false;}
 
     public boolean authtoken(){return false;}
+
+    public boolean validaFraseSecreta() {return false;}
 }
 
 
