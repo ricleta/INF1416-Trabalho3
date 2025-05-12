@@ -1,5 +1,7 @@
 package CofreDigital.UI;
 
+import CofreDigital.UI.TelaCadastro;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -22,7 +24,6 @@ public class TelaPrincipal extends JFrame {
 
     private void configurarTela() {
         setTitle("Menu Principal");
-        setSize(400, 250);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // Centraliza a janela
 
@@ -31,23 +32,27 @@ public class TelaPrincipal extends JFrame {
 
         // Cabeçalho
         JLabel labelCabecalho = new JLabel("<html>Login: " + loginNameAtual + "<br>" +
-                "Grupo: " + nomeGrupoAtual + "<br>" +
-                "Nome: " + nomeUsuarioAtual + "<br>" +
-                "Acesso: " + total_de_acessos_usuario + "</html>");
+            "Grupo: " + nomeGrupoAtual + "<br>" +
+            "Nome: " + nomeUsuarioAtual + "</html>");
         labelCabecalho.setHorizontalAlignment(SwingConstants.CENTER);
         labelCabecalho.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(labelCabecalho, BorderLayout.NORTH);
+
+        JLabel labelCorpo1 = new JLabel("<html>Total de acessos do usuario: " + total_de_acessos_usuario + "</html>");
+        labelCorpo1.setHorizontalAlignment(SwingConstants.CENTER);
+        labelCorpo1.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(labelCorpo1, BorderLayout.CENTER);
 
         // Painel com botões
         JPanel painelBotoes = new JPanel();
         painelBotoes.setLayout(new FlowLayout());
 
-        JButton btnAcessar = new JButton("Acessar Cofre");
-        JButton btnQRCode = new JButton("Gerar QR Code");
-        JButton btnSair = new JButton("Sair");
+        JButton btnAcessar = new JButton("Cadastrar um novo usuario");
+        JButton btnQRCode = new JButton("Consultar pasta de arquivos secretos do usuario");
+        JButton btnSair = new JButton("Sair do Sistema");
 
         // Ações dos botões
-        btnAcessar.addActionListener(e -> JOptionPane.showMessageDialog(this, "Acessando Cofre..."));
+        btnAcessar.addActionListener(e -> cadastrarUsuario());
         btnQRCode.addActionListener(e -> JOptionPane.showMessageDialog(this, "Gerando QR Code..."));
         btnSair.addActionListener(e -> System.exit(0));
 
@@ -55,10 +60,14 @@ public class TelaPrincipal extends JFrame {
         painelBotoes.add(btnQRCode);
         painelBotoes.add(btnSair);
 
-        add(painelBotoes, BorderLayout.CENTER);
+        add(painelBotoes, BorderLayout.SOUTH);
+        
+        pack();
     }
 
-    public void exibirTela() {
-        setVisible(true);
+    private void cadastrarUsuario() {
+        String [] grupos = {"admins", "usuarios"};
+        TelaCadastro telaCadastro = new TelaCadastro(loginNameAtual, nomeGrupoAtual, nomeUsuarioAtual, total_de_acessos_usuario, grupos);
+        telaCadastro.setVisible(true);
     }
 }

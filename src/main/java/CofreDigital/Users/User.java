@@ -31,6 +31,12 @@ public class User {
         this.token = token;
     }
 
+    public User(String email, String senhaPessoal, String fraseSecreta) {
+        this.email = email;
+        this.senhaPessoal = senhaPessoal;
+        this.fraseSecreta = fraseSecreta;
+    }
+
     public String getEmail() {
         return email;
     }

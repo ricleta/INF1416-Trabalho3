@@ -45,8 +45,8 @@ public class DB {
     // Verifica se campos das tabelas estão corretos, especialmente os tipos
     private void setupTables(Connection con) {
         /*
-            Usamos TEXT para UID, KID e MID
-            Enquanto usamos INTEGER PRIMARY KEY para GID e RID 
+            Usamos TEXT para MID
+            Enquanto usamos INTEGER PRIMARY KEY para o UID, KID, GID e RID 
             porque SQLite os incrementa automaticamente por default. 
         */
         createUserTable(con);
@@ -71,10 +71,10 @@ public class DB {
     private void createUserTable(Connection con) {
         String queryCreateUser =
             "CREATE TABLE IF NOT EXISTS Usuarios (" +
-            "UID TEXT PRIMARY KEY, " +
+            "UID INTEGER PRIMARY KEY, " +
             "email TEXT NOT NULL, " +
             "senhaPessoal TEXT NOT NULL, " +
-            "KID TEXT NOT NULL, " +
+            "KID INTEGER NOT NULL, " +
             "token TEXT NOT NULL, " +
             "FOREIGN KEY (KID) REFERENCES Chaveiro(KID)" +
             ");";
@@ -91,11 +91,9 @@ public class DB {
         // chavePrivada é um BLOB porque está em binário
         String queryCreateKeyChain =
             "CREATE TABLE IF NOT EXISTS Chaveiro (" +
-            "KID TEXT PRIMARY KEY, " +
-            "UID TEXT NOT NULL, " +
+            "KID INTEGER PRIMARY KEY, " +
             "certificadoDigital TEXT NOT NULL, " +
-            "chavePrivada BLOB NOT NULL, " +
-            "FOREIGN KEY (UID) REFERENCES Usuarios(UID)" +
+            "chavePrivada BLOB NOT NULL " +
             ");";
 
         try (Statement stmt = con.createStatement()) {
@@ -138,7 +136,7 @@ public class DB {
             "CREATE TABLE IF NOT EXISTS Registros (" +
             "RID INTEGER PRIMARY KEY, " +
             "dataHora TEXT NOT NULL, " +
-            "UID TEXT, " +
+            "UID INTEGER, " +
             "MID TEXT, " +
             "FOREIGN KEY (UID) REFERENCES Usuarios(UID), " +
             "FOREIGN KEY (MID) REFERENCES Mensagens(MID)" +
@@ -225,24 +223,65 @@ public class DB {
         }
     }
 
-    // public void addUser(User user) {
-    //     String queryInsertUser = "INSERT INTO Usuarios (UID, email, senhaPessoal, KID, token) VALUES (?, ?, ?, ?, ?)";
+    public void addUser(User user, byte[] chavePrivada, String certificadoDigital) {
+        System.out.println("Adicionando chaveiro e usuario ao banco de dados...");
+        int kid = addKeyChain(user, chavePrivada, certificadoDigital);
 
-    //     try (Connection con = DriverManager.getConnection(DB_URL);
-    //             PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
-    //         pstmt.setString(1, user.getUid());
-    //         pstmt.setString(2, user.getEmail());
-    //         pstmt.setString(3, user.getSenhaPessoal());
-    //         pstmt.setString(4, user.getKID());
-    //         pstmt.setString(5, user.getToken());
-    //         pstmt.executeUpdate();
-    //     } catch (SQLException e) {
-    //         System.err.println("Error: " + e.getMessage());
-    //     }
-    // }
+        if (kid == -1) {
+            System.out.println("Erro ao adicionar chaveiro.");
+            return;
+        }
 
-    public void addAdmin(User admin)
-    {
-        // TODO
+        // TODO: Remove this and have the token generated correctly
+        user.setToken("token");
+
+        String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, token) VALUES (?, ?, ?, ?)";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
+            pstmt.setString(1, user.getEmail());
+            pstmt.setString(2, user.getSenhaPessoal());
+            pstmt.setInt(3, kid);
+            pstmt.setString(4, user.getToken());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error in addUser: " + e.getMessage());
+        }
+    }
+
+    public int addKeyChain(User user, byte[] chavePrivada, String certificadoDigital) {
+        String queryInsertKeyChain = "INSERT INTO Chaveiro (certificadoDigital, chavePrivada) VALUES (?, ?)";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(queryInsertKeyChain)) {
+            pstmt.setString(1, certificadoDigital);
+            pstmt.setBytes(2, chavePrivada);
+            pstmt.executeUpdate();
+
+            // Get the last inserted KID
+            String queryGetLastKid = "SELECT last_insert_rowid()";
+            try (Statement stmt = con.createStatement();
+                    ResultSet rs = stmt.executeQuery(queryGetLastKid)) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in addKeyChain: " + e.getMessage());
+        }
+
+        return -1; // Return -1 if there was an error
+    }
+
+    public boolean userExists(User user) {
+        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ? AND senhaPessoal = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, user.getEmail());
+            pstmt.setString(2, user.getSenhaPessoal());
+            ResultSet rs = pstmt.executeQuery();
+            return rs.getInt(1) > 0;
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return false;
     }
 }
