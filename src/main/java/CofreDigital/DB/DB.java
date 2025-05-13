@@ -224,8 +224,8 @@ public class DB {
     }
 
     public void addUser(User user, byte[] chavePrivada, String certificadoDigital) {
-        System.out.println("Adicionando chaveiro e usuario ao banco de dados...");
-        int kid = addKeyChain(user, chavePrivada, certificadoDigital);
+        // System.out.println("Adicionando chaveiro e usuario ao banco de dados...");
+        int kid = addKeyChain(chavePrivada, certificadoDigital);
 
         if (kid == -1) {
             System.out.println("Erro ao adicionar chaveiro.");
@@ -248,8 +248,9 @@ public class DB {
         }
     }
 
-    public int addKeyChain(User user, byte[] chavePrivada, String certificadoDigital) {
+    public int addKeyChain(byte[] chavePrivada, String certificadoDigital) {
         String queryInsertKeyChain = "INSERT INTO Chaveiro (certificadoDigital, chavePrivada) VALUES (?, ?)";
+       
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(queryInsertKeyChain)) {
             pstmt.setString(1, certificadoDigital);

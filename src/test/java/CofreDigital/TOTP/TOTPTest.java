@@ -1,6 +1,9 @@
 package CofreDigital.TOTP;
 
 import org.junit.jupiter.api.Test;
+
+import CofreDigital.SecurityEncryption.TOTP;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Date;
