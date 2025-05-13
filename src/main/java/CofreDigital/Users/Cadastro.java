@@ -2,7 +2,6 @@ package CofreDigital.Users;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -39,19 +38,14 @@ consta no certificado digital fornecido. */
 
             //assinatura digital foi verificada com sucesso
 
-            String kid = UUID.randomUUID().toString();
-
             byte[] privateKeyBytes = Files.readAllBytes(Paths.get(caminhoChavePrivada));
             SecretKey encryptionKey = EncryptionUtil.generateKey();
             byte[] encryptedPrivateKey = EncryptionUtil.encrypt(privateKeyBytes, encryptionKey);
 
             String certificatePEM = new String(Files.readAllBytes(Paths.get(caminhoCertificado)));
 
-            //TODO : (store user + kid in user table) + (store encrypted private key + PEM certificate in chaveiro table)
-            /*db.addUser(user, encryptedPrivateKey, caminhoCertificado);
-            db.addKeyChain(user, encryptedPrivateKey, certificatePEM);
-            db.addKid(user, kid); 
-            System.out.println("Usuário cadastrado com sucesso.");*/
+            //store user + store encrypted private key and PEM certificate in chaveiro table
+            db.addUser(user, encryptedPrivateKey, certificatePEM);
 
         }
 
@@ -60,7 +54,7 @@ consta no certificado digital fornecido. */
             return;
         }
 
-        // TODO: Get hash of the password and actual certificate
-        byte[] chavePrivada = caminhoChavePrivada.getBytes();
+        /*  TODO: Get hash of the password and actual certificate
+        byte[] chavePrivada = caminhoChavePrivada.getBytes();*/
     }
 }
