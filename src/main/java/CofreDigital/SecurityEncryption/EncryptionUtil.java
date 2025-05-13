@@ -1,4 +1,4 @@
-package CofreDigital.Code;
+package CofreDigital.SecurityEncryption;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;

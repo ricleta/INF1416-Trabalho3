@@ -1,4 +1,4 @@
-package CofreDigital.Code;
+package CofreDigital.SecurityEncryption;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;

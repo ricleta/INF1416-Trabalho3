@@ -284,23 +284,4 @@ public class DB {
         }
         return false;
     }
-
-    public int addKid(User user, String kid) {
-        String query = "UPDATE Usuarios SET KID = ? WHERE email = ?";
-
-        try (Connection con = DriverManager.getConnection(DB_URL);
-                PreparedStatement pstmt = con.prepareStatement(query)) {
-            pstmt.setString(1, kid);
-            pstmt.setString(2, user.getEmail());
-            pstmt.executeUpdate();
-            return 1;
-        } 
-        
-        catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-
-
-        return -1;
-    }
 }

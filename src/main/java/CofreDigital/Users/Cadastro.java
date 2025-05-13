@@ -5,9 +5,9 @@ import java.nio.file.Paths;
 
 import javax.crypto.SecretKey;
 
-import CofreDigital.Code.KeyValidator;
-import CofreDigital.Code.EncryptionUtil;
 import CofreDigital.DB.DB;
+import CofreDigital.SecurityEncryption.EncryptionUtil;
+import CofreDigital.SecurityEncryption.KeyValidator;
 
 public class Cadastro {
     private DB db;

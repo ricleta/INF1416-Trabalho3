@@ -1,10 +1,10 @@
 /home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Cofre.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/SecurityEncryption/Base32.java
 /home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/UI/TelaCadastro.java
-/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/Base32.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/SecurityEncryption/EncryptionUtil.java
 /home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Users/User.java
 /home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/DB/DB.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/SecurityEncryption/KeyValidator.java
 /home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/UI/TelaPrincipal.java
-/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/TOTP.java
 /home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Users/Cadastro.java
-/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/KeyValidator.java
-/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/EncryptionUtil.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/SecurityEncryption/TOTP.java
