@@ -48,12 +48,17 @@ public class Cofre{
     }
 
     public static void cadastrarUsuario(String certificado, String chavePrivada, String fraseSecreta, String grupo, String senha, String confirmacaoSenha) {
-      // TODO Auto-generated method stub
+      if (!senha.equals(confirmacaoSenha)) {
+        System.out.println("As senhas não coincidem.");
+        return;
+      }
+
       db = new DB();
 
       Cadastro cadastro = new Cadastro(db);
 
-      cadastro.cadastrarUsuario(certificado, chavePrivada, fraseSecreta, grupo, senha, confirmacaoSenha);
+
+      cadastro.cadastrarUsuario(certificado, chavePrivada, fraseSecreta, senha);
     }
 }
 

@@ -1,5 +1,6 @@
 package CofreDigital.Users;
 
+import java.awt.RenderingHints.Key;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -11,50 +12,77 @@ import CofreDigital.SecurityEncryption.KeyValidator;
 
 public class Cadastro {
     private DB db;
+    private KeyValidator keyValidator;
 
     public Cadastro(DB db) {
         this.db = db;
+        this.keyValidator = new KeyValidator();
     }
 
-    public void cadastrarUsuario(String login, String senha, String nome, String caminhoCertificado, String caminhoChavePrivada, String fraseSecreta) {
-        User user = new User(login, senha, fraseSecreta);
-
-        // Verifica se o usuário já existe
-        if (db.userExists(user)) {
-            System.out.println("Usuário já existe.");
-            return;
-        }
-
-        /*A frase secreta da chave privada deve ser testada e a chave privada deve ser verificada com a
-validação da assinatura digital de um array aleatório de 8192 bytes com a chave pública que
-consta no certificado digital fornecido. */
-
+    public void cadastrarUsuario(String caminhoCertificado, String caminhoChavePrivada, String fraseSecreta, String senha) {
+        
+        // try {
         try {
-            boolean isValid = KeyValidator.validatePrivateKey(caminhoCertificado, caminhoChavePrivada, fraseSecreta);
+            boolean isValid = keyValidator.validatePrivateKey(caminhoCertificado, caminhoChavePrivada, fraseSecreta);
             if (!isValid) {
                 System.out.println("Chave privada ou frase secreta inválida. Tente novamente.");
                 return;
             }
-
+        }
+        catch (Exception e) {
+            System.out.println("Erro ao validar a chave privada: " + e.getMessage());
+            return;
+        }
             //assinatura digital foi verificada com sucesso
 
-            byte[] privateKeyBytes = Files.readAllBytes(Paths.get(caminhoChavePrivada));
-            SecretKey encryptionKey = EncryptionUtil.generateKey();
-            byte[] encryptedPrivateKey = EncryptionUtil.encrypt(privateKeyBytes, encryptionKey);
+            byte[] privateKeyBytes = null;
+            byte[] encryptedPrivateKey = null;
+            try {
 
-            String certificatePEM = new String(Files.readAllBytes(Paths.get(caminhoCertificado)));
+                privateKeyBytes = Files.readAllBytes(Paths.get(caminhoChavePrivada));
+                SecretKey encryptionKey = EncryptionUtil.generateKey();
+                encryptedPrivateKey = EncryptionUtil.encrypt(privateKeyBytes, encryptionKey);
+            }
+            catch (Exception e) {
+                System.out.println("Erro ao ler a chave privada: " + e.getMessage());
+                return;
+            }
+
+            String certificatePEM = null;
+            try {
+                certificatePEM = new String(Files.readAllBytes(Paths.get(caminhoCertificado)));
+
+                System.out.println("Certificado PEM: " + certificatePEM);
+            }
+            catch (Exception e) {
+                System.out.println("Erro ao ler o certificado: " + e.getMessage());
+                return;
+            }
+            // Pegar email do usuario usando certificado
+            // String email = KeyValidator.getEmailFromCertificate(certificatePEM);
+
+            // obter login do usuario usando o email no certificado
+            String login = "login"; // TODO: Obter o login do usuário
+
+            User user = new User(login, senha, fraseSecreta);
+
+            // Verifica se o usuário já existe
+            if (db.userExists(user)) {
+                System.out.println("Usuário já existe.");
+                return;
+            }
 
             //store user + store encrypted private key and PEM certificate in chaveiro table
             db.addUser(user, encryptedPrivateKey, certificatePEM);
 
         }
 
-        catch (Exception e) {
-            System.out.println("Erro ao validar a chave privada: " + e.getMessage());
-            return;
-        }
+        // catch (Exception e) {
+        //     System.out.println("Erro ao validar a chave privada: " + e.getMessage());
+        //     return;
+        // }
 
         /*  TODO: Get hash of the password and actual certificate
         byte[] chavePrivada = caminhoChavePrivada.getBytes();*/
-    }
+    // }
 }

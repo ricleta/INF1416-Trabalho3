@@ -1,11 +1,12 @@
 CofreDigital/DB/DB.class
-CofreDigital/Code/Base32$Alphabet.class
-CofreDigital/Code/Base32.class
-CofreDigital/Code/KeyValidator.class
+CofreDigital/SecurityEncryption/Base32$Alphabet.class
+CofreDigital/SecurityEncryption/KeyValidator.class
 CofreDigital/UI/TelaPrincipal.class
-CofreDigital/Code/TOTP.class
+CofreDigital/SecurityEncryption/Base32.class
 CofreDigital/UI/TelaCadastro.class
 CofreDigital/Users/Cadastro.class
-CofreDigital/Code/EncryptionUtil.class
+CofreDigital/SecurityEncryption/TOTP.class
+CofreDigital/Cofre.class
+CofreDigital/SecurityEncryption/EncryptionUtil.class
 CofreDigital/Users/User.class
 CofreDigital/Cofre.class

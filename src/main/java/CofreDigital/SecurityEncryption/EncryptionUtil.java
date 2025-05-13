@@ -1,3 +1,4 @@
+
 package CofreDigital.SecurityEncryption;
 
 import javax.crypto.Cipher;
@@ -29,4 +30,5 @@ public class EncryptionUtil {
         byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
         return new SecretKeySpec(decodedKey, ALGORITHM);
     }
+
 }
