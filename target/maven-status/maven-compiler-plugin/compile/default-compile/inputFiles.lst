@@ -1,8 +1,10 @@
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/TOTP/Base32.java
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/Cofre.java
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/Users/User.java
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/TOTP/TOTP.java
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/DB/DB.java
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/Users/Cadastro.java
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/UI/TelaCadastro.java
-/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/src/main/java/CofreDigital/UI/TelaPrincipal.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Cofre.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/UI/TelaCadastro.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/Base32.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Users/User.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/DB/DB.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/UI/TelaPrincipal.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/TOTP.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Users/Cadastro.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/KeyValidator.java
+/home/livia/Documents/INF1416-Trabalho3/src/main/java/CofreDigital/Code/EncryptionUtil.java

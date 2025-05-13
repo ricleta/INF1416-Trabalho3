@@ -3,7 +3,7 @@
   Ricardo Bastos Leta Vieira, 2110526
 */
 
-package CofreDigital.TOTP;
+package CofreDigital.Code;
 
 import java.io.*;
 /**
