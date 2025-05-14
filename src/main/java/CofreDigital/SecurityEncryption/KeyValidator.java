@@ -1,20 +1,26 @@
 package CofreDigital.SecurityEncryption;
 
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Base64;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -25,13 +31,6 @@ import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
-
-import java.io.FileReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-
 
 public class KeyValidator {
     private static final String PROVIDER = "BC";
@@ -53,35 +52,35 @@ public class KeyValidator {
         }
     }
 
-    private PrivateKey getPrivateKey(String privateKeyPath, String passphrase) {
+    public static PrivateKey getPrivateKey(String privateKeyPath, String passphrase) {
         try {
-            // 1. Lê os dados criptografados da chave privada
-            byte[] encryptedBytes = Files.readAllBytes(Paths.get(privateKeyPath));
-            System.out.println("Encrypted bytes length: " + encryptedBytes.length);
+            Security.addProvider(new BouncyCastleProvider());
 
-          
-            // 3. Deriva a chave AES (256 bits) da frase secreta usando SHA1PRNG
-            SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
-            sr.setSeed(passphrase.getBytes(StandardCharsets.UTF_8));
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-            keyGen.init(256, sr);
-            SecretKey aesKey = keyGen.generateKey();
+            // 1. Lê os dados criptografados da chave privada (BINÁRIO)
+            byte[] encryptedPrivateKey = Files.readAllBytes(Paths.get(privateKeyPath));
+            System.out.println("Encrypted private key length: " + encryptedPrivateKey.length);
 
-            // 4. Cria o Cipher AES/ECB/PKCS5Padding e decripta os dados
+            // 2. Deriva uma chave AES de 256 bits a partir da frase secreta usando SHA-256
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            byte[] keyBytes = sha256.digest(passphrase.getBytes(StandardCharsets.UTF_8));
+            SecretKeySpec aesKey = new SecretKeySpec(keyBytes, "AES");
+
+            // 3. Decripta com AES/ECB/PKCS5Padding
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, aesKey);
-            byte[] decryptedBytes = cipher.doFinal(encryptedBytes); 
-            System.out.println("Decrypted bytes length: " + decryptedBytes.length);
+            byte[] decryptedBytes = cipher.doFinal(encryptedPrivateKey);
+            System.out.println("Decrypted private key length: " + decryptedBytes.length);
 
-            // 5. Constrói a chave privada a partir do conteúdo PKCS#8 decodificado
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decryptedBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA"); 
-            return keyFactory.generatePrivate(keySpec);
+            // 4. Interpreta os bytes PKCS#8 com Bouncy Castle
+            PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(decryptedBytes);
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+            return converter.getPrivateKey(privateKeyInfo);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to load or decrypt private key: " + e.getMessage(), e);
         }
     }
+
 
     public boolean validatePrivateKey(String certPath, String privateKeyPath, String passphrase) throws Exception {
         // Step 1: Generate a random 8192-byte array
