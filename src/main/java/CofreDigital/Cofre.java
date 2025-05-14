@@ -62,7 +62,6 @@ public class Cofre{
     }
 }
 
-//one method for each authentication step?
 
 
 

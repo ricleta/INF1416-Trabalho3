@@ -1,15 +1,23 @@
+
+/*
+  Lívia Lutz dos Santos, 2211055
+  Ricardo Bastos Leta Vieira, 2110526
+*/
 package CofreDigital.SecurityEncryption;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import java.util.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.io.FileInputStream;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
+
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -91,4 +99,28 @@ public class KeyValidator {
         signature.update(randomArray);
         return signature.verify(digitalSignature);
     }
+
+    public String getEmailFromCertificate(String certPath) {
+        try {
+            Certificate cert = getCertificate(certPath);
+            if (cert instanceof X509Certificate) {
+                X509Certificate x509Cert = (X509Certificate) cert;
+
+                String subjectDN = x509Cert.getSubjectX500Principal().getName();
+                LdapName ldapName = new LdapName(subjectDN);
+
+                for (Rdn rdn : ldapName.getRdns()) {
+                    if (rdn.getType().equalsIgnoreCase("EMAILADDRESS")) {
+                        return rdn.getValue().toString();
+                    }
+                }
+            }
+            return null; // Not found
+        } 
+    
+        catch (Exception e) {
+            throw new RuntimeException("Failed to extract email address from certificate: " + e.getMessage(), e);
+        }
+    }
+        
 }

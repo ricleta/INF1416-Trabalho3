@@ -285,4 +285,53 @@ public class DB {
         }
         return false;
     }
+
+    public String getUserEmail(String email) {
+        String query = "SELECT email FROM Usuarios WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("email");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public String getUserSenhaPessoal(String senha) {
+        String query = "SELECT senhaPessoal FROM Usuarios WHERE senhaPessoal = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, senha);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("senhaPessoal");
+            }
+        } 
+        
+        catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public String getUserToken(String token){
+        String query = "SELECT token FROM Usuarios WHERE token = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, token);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("token");
+            }
+        } 
+        
+        catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return null;
+    }
 }

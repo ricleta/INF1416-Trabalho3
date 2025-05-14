@@ -80,12 +80,6 @@ public class User {
     public boolean authlogin(){
         return false;
     }
-
-    public boolean authsenhaPessoal(){return false;}
-
-    public boolean authtoken(){return false;}
-
-    public boolean validaFraseSecreta() {return false;}
 }
 
 

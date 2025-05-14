@@ -1,3 +1,7 @@
+/*
+  Lívia Lutz dos Santos, 2211055
+  Ricardo Bastos Leta Vieira, 2110526
+*/
 package CofreDigital.Users;
 
 import java.awt.RenderingHints.Key;
@@ -49,8 +53,12 @@ public class Cadastro {
             }
 
             String certificatePEM = null;
+            String emailUser = null;
             try {
                 certificatePEM = new String(Files.readAllBytes(Paths.get(caminhoCertificado)));
+                
+                // Pega o email do usuário usando o certificado
+                emailUser = keyValidator.getEmailFromCertificate(caminhoCertificado);
 
                 System.out.println("Certificado PEM: " + certificatePEM);
             }
@@ -58,11 +66,9 @@ public class Cadastro {
                 System.out.println("Erro ao ler o certificado: " + e.getMessage());
                 return;
             }
-            // Pegar email do usuario usando certificado
-            // String email = KeyValidator.getEmailFromCertificate(certificatePEM);
-
+            
             // obter login do usuario usando o email no certificado
-            String login = "login"; // TODO: Obter o login do usuário
+            String login = emailUser;
 
             User user = new User(login, senha, fraseSecreta);
 
