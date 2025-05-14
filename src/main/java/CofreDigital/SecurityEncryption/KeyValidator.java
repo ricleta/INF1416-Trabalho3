@@ -1,42 +1,27 @@
 package CofreDigital.SecurityEncryption;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import java.util.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.security.spec.PKCS8EncodedKeySpec;
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Base64;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
-import org.bouncycastle.operator.InputDecryptorProvider;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
-import org.bouncycastle.pkcs.PKCSException;
 
 public class KeyValidator {
     private static final String PROVIDER = "BC";
     private static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
     private static final String CERTIFICATE_TYPE = "X.509";
     private static final int RANDOM_ARRAY_SIZE = 8192;
+    private static final String CRIPT_ALGORITHM = "AES/ECB/PKCS5Padding";
+    private static final String AES_ALGORITHM = "AES";
+    private static final String DIGEST_ALGORITHM = "SHA-256";
 
     public KeyValidator() {
         Security.addProvider(new BouncyCastleProvider());
@@ -54,29 +39,29 @@ public class KeyValidator {
 
     public static PrivateKey getPrivateKey(String privateKeyPath, String passphrase) {
         try {
-            Security.addProvider(new BouncyCastleProvider());
-
-            // 1. Lê os dados criptografados da chave privada (BINÁRIO)
+            
+            // 1. Lê os dados criptografados da chave privada 
             byte[] encryptedPrivateKey = Files.readAllBytes(Paths.get(privateKeyPath));
-            System.out.println("Encrypted private key length: " + encryptedPrivateKey.length);
 
             // 2. Deriva uma chave AES de 256 bits a partir da frase secreta usando SHA-256
-            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            MessageDigest sha256 = MessageDigest.getInstance(DIGEST_ALGORITHM);
             byte[] keyBytes = sha256.digest(passphrase.getBytes(StandardCharsets.UTF_8));
-            SecretKeySpec aesKey = new SecretKeySpec(keyBytes, "AES");
+            SecretKeySpec aesKey = new SecretKeySpec(keyBytes, AES_ALGORITHM);
 
-            // 3. Decripta com AES/ECB/PKCS5Padding
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            // 3. Decripta com AES/ECB/PKCS5Padding 
+            Cipher cipher = Cipher.getInstance(CRIPT_ALGORITHM, PROVIDER);
             cipher.init(Cipher.DECRYPT_MODE, aesKey);
+            // problema ta aqui!!!
             byte[] decryptedBytes = cipher.doFinal(encryptedPrivateKey);
-            System.out.println("Decrypted private key length: " + decryptedBytes.length);
 
             // 4. Interpreta os bytes PKCS#8 com Bouncy Castle
             PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(decryptedBytes);
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
             return converter.getPrivateKey(privateKeyInfo);
 
-        } catch (Exception e) {
+        } 
+        
+        catch (Exception e) {
             throw new RuntimeException("Failed to load or decrypt private key: " + e.getMessage(), e);
         }
     }
