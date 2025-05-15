@@ -334,4 +334,21 @@ public class DB {
         }
         return null;
     }
+
+    public String getUserFraseSecreta(String fraseSecreta) {
+        String query = "SELECT fraseSecreta FROM Usuarios WHERE fraseSecreta = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, fraseSecreta);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("fraseSecreta");
+            }
+        } 
+        
+        catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return null;
+    }
 }

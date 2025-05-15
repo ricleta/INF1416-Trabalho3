@@ -122,5 +122,21 @@ public class KeyValidator {
             throw new RuntimeException("Failed to extract email address from certificate: " + e.getMessage(), e);
         }
     }
+
+    public PublicKey getPublicKeyFromCertificate(String certPath) {
+        try {
+            Certificate cert = getCertificate(certPath);
+            if (cert instanceof X509Certificate) {
+                X509Certificate x509Cert = (X509Certificate) cert;
+                return x509Cert.getPublicKey();
+            }
+            return null; // Not found
+        } 
+    
+        catch (Exception e) {
+            throw new RuntimeException("Failed to extract public key from certificate: " + e.getMessage(), e);
+        }
+
+    }
         
 }

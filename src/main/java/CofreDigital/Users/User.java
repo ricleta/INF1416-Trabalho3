@@ -76,10 +76,6 @@ public class User {
     public void setTotal_de_acessos(int total_de_acessos) {
         this.total_de_acessos = total_de_acessos;
     }
-    
-    public boolean authlogin(){
-        return false;
-    }
 }
 
 
