@@ -3,7 +3,7 @@
   Ricardo Bastos Leta Vieira, 2110526
 */
 
-package CofreDigital;
+package CofreDigital.Users;
 
 /*import com.eatthepath:otp-java;
 import com.google.zxing.BarcodeFormat;
@@ -18,14 +18,23 @@ import java.io.IOException;*/
 public class User {
     private String email;
     private String senhaPessoal;
-    
+    private String fraseSecreta;
+    private int total_de_acessos;
+
     //from Google authenticator
     private String token;
 
-    public User(String email,String senhaPessoal,String token){
+    public User(String email, String senhaPessoal, String token, String fraseSecreta) {
         this.email = email;
         this.senhaPessoal = senhaPessoal;
+        this.fraseSecreta = fraseSecreta;
         this.token = token;
+    }
+
+    public User(String email, String senhaPessoal, String fraseSecreta) {
+        this.email = email;
+        this.senhaPessoal = senhaPessoal;
+        this.fraseSecreta = fraseSecreta;
     }
 
     public String getEmail() {
@@ -51,6 +60,32 @@ public class User {
     public void setToken(String token) {
         this.token = token;
     }
+
+    public String getFraseSecreta() {
+        return fraseSecreta;
+    }
+
+    public void setFraseSecreta(String fraseSecreta) {
+        this.fraseSecreta = fraseSecreta;
+    }
+
+    public int getTotal_de_acessos() {
+        return total_de_acessos;
+    }
+
+    public void setTotal_de_acessos(int total_de_acessos) {
+        this.total_de_acessos = total_de_acessos;
+    }
+    
+    public boolean authlogin(){
+        return false;
+    }
+
+    public boolean authsenhaPessoal(){return false;}
+
+    public boolean authtoken(){return false;}
+
+    public boolean validaFraseSecreta() {return false;}
 }
 
 
