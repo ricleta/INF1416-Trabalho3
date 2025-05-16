@@ -1,3 +1,7 @@
+/*
+  Lívia Lutz dos Santos, 2211055
+  Ricardo Bastos Leta Vieira, 2110526
+*/
 package CofreDigital.UI;
 
 import java.util.Map;
@@ -56,7 +60,12 @@ public class TelaConfirmacao extends JFrame {
 
         btnCadastrar.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Cadastrando o usuário...");
-            Cofre.cadastrarUsuario(parthCertificado, chavePrivada, fraseSecreta, grupo, senha);
+
+            VirtualKeyboard teclado = new VirtualKeyboard(senha);
+            teclado.setVisible(true);
+            String confirmacaoSenha = teclado.getSenhaDigitada();
+            
+            Cofre.cadastrarUsuario(parthCertificado, chavePrivada, fraseSecreta, grupo, senha,confirmacaoSenha);
             dispose();
         });
 
