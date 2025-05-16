@@ -7,6 +7,9 @@ package CofreDigital.Users;
 import java.awt.RenderingHints.Key;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
 
 import javax.crypto.SecretKey;
 
@@ -23,9 +26,7 @@ public class Cadastro {
         this.keyValidator = new KeyValidator();
     }
 
-    public void cadastrarUsuario(String caminhoCertificado, String caminhoChavePrivada, String fraseSecreta, String senha) {
-        
-        // try {
+    public void cadastrarUsuario(String caminhoCertificado, String caminhoChavePrivada, String fraseSecreta, String senha) {        
         try {
             boolean isValid = keyValidator.validatePrivateKey(caminhoCertificado, caminhoChavePrivada, fraseSecreta);
             if (!isValid) {
@@ -46,6 +47,8 @@ public class Cadastro {
                 privateKeyBytes = Files.readAllBytes(Paths.get(caminhoChavePrivada));
                 SecretKey encryptionKey = EncryptionUtil.generateKey();
                 encryptedPrivateKey = EncryptionUtil.encrypt(privateKeyBytes, encryptionKey);
+
+                System.out.println("Chave privada criptografada: " + encryptedPrivateKey.toString());
             }
             catch (Exception e) {
                 System.out.println("Erro ao ler a chave privada: " + e.getMessage());
@@ -53,22 +56,22 @@ public class Cadastro {
             }
 
             String certificatePEM = null;
-            String emailUser = null;
+            X509Certificate certificate = null;
             try {
                 certificatePEM = new String(Files.readAllBytes(Paths.get(caminhoCertificado)));
-                
-                // Pega o email do usuário usando o certificado
-                emailUser = keyValidator.getEmailFromCertificate(caminhoCertificado);
+                certificate = keyValidator.getCertificate(caminhoCertificado);
 
-                System.out.println("Certificado PEM: " + certificatePEM);
+                System.out.println("Certificado: " + certificate);
             }
             catch (Exception e) {
                 System.out.println("Erro ao ler o certificado: " + e.getMessage());
                 return;
             }
-            
+
+
             // obter login do usuario usando o email no certificado
-            String login = emailUser;
+            String login = keyValidator.getLoginFromCertificate(certificate);
+            System.out.println("Login: " + login);
 
             User user = new User(login, senha, fraseSecreta);
 
@@ -78,17 +81,12 @@ public class Cadastro {
                 return;
             }
 
+            System.out.println("User email: " + user.getEmail());
+            System.out.println("User senha: " + user.getSenhaPessoal());
+            System.out.println("User frase secreta: " + user.getFraseSecreta());
+
             //store user + store encrypted private key and PEM certificate in chaveiro table
             db.addUser(user, encryptedPrivateKey, certificatePEM);
 
         }
-
-        // catch (Exception e) {
-        //     System.out.println("Erro ao validar a chave privada: " + e.getMessage());
-        //     return;
-        // }
-
-        /*  TODO: Get hash of the password and actual certificate
-        byte[] chavePrivada = caminhoChavePrivada.getBytes();*/
-    // }
 }
