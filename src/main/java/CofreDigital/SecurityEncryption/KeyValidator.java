@@ -132,4 +132,21 @@ public class KeyValidator {
         signature.update(randomArray);
         return signature.verify(digitalSignature);
     }
+
+
+    public PublicKey getPublicKeyFromCertificate(String certPath) {
+        try {
+            Certificate cert = getCertificate(certPath);
+            if (cert instanceof X509Certificate) {
+                X509Certificate x509Cert = (X509Certificate) cert;
+                return x509Cert.getPublicKey();
+            }
+            return null; // Not found
+        } 
+    
+        catch (Exception e) {
+            throw new RuntimeException("Failed to extract public key from certificate: " + e.getMessage(), e);
+        }
+
+    }
 }
