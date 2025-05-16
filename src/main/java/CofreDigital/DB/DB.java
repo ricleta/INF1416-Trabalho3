@@ -5,6 +5,9 @@
 
 package CofreDigital.DB;
 
+import CofreDigital.SecurityEncryption.TOTP;
+import CofreDigital.SecurityEncryption.Base32.Alphabet;
+import CofreDigital.SecurityEncryption.Base32;
 import CofreDigital.Users.User;
 
 import java.io.InputStream;
@@ -12,6 +15,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
+
+import org.bouncycastle.jcajce.provider.symmetric.ARC4.Base;
+
 import java.io.IOException;
 
 public class DB {
@@ -232,9 +238,23 @@ public class DB {
             return;
         }
 
-        // TODO: Remove this and have the token generated correctly
-        user.setToken("token");
+        //gerar token TOTP a partir da chave privada
+        Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);
+        String base32Secret = base32.toString(chavePrivada);
 
+        try{   
+            TOTP totp = new TOTP(base32Secret, 30);
+            long timeInterval = System.currentTimeMillis() / 1000 / 30; // 30 segundos
+            String token = totp.generateCode(timeInterval);
+            user.setToken(token);
+        }
+
+        catch (Exception e) {
+            System.err.println("Erro ao gerar codigo TOTP: " + e.getMessage());
+            return;
+        }
+       
+    
         String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, token) VALUES (?, ?, ?, ?)";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
@@ -245,6 +265,7 @@ public class DB {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error in addUser: " + e.getMessage());
+            return;
         }
     }
 
