@@ -6,6 +6,7 @@
 
 package CofreDigital;
 
+import java.util.Map;
 import java.util.Scanner;
 
 import javax.swing.JFrame;
@@ -57,7 +58,12 @@ public class Cofre{
 
       Cadastro cadastro = new Cadastro(db);
 
+      Map<String, String> certificateData = cadastro.getCertificateData(certificado);
 
+      for (Map.Entry<String, String> entry : certificateData.entrySet()) {
+          System.out.println(entry.getKey() + ": " + entry.getValue());
+      }
+      
       cadastro.cadastrarUsuario(certificado, chavePrivada, fraseSecreta, senha);
     }
 }

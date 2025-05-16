@@ -1,25 +1,65 @@
 package CofreDigital.Users;
 
-import java.awt.RenderingHints.Key;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.cert.Certificate;
-import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
-
-import javax.crypto.SecretKey;
-
 import CofreDigital.DB.DB;
 import CofreDigital.SecurityEncryption.EncryptionUtil;
 import CofreDigital.SecurityEncryption.KeyValidator;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.Security;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+
+import javax.crypto.SecretKey;
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class Cadastro {
+    private static final int SALT_COST = 8;
     private DB db;
     private KeyValidator keyValidator;
 
     public Cadastro(DB db) {
         this.db = db;
         this.keyValidator = new KeyValidator();
+        Security.addProvider(new BouncyCastleProvider());
+    }
+
+    public boolean doPasswordsMatch(String senha, String confirmacaoSenha) {
+        if (!senha.equals(confirmacaoSenha)) {
+            System.out.println("As senhas não coincidem.");
+            return false;
+        }
+        return true;
+    }
+
+    public Map<String, String> getCertificateData(String caminhoCertificado) {
+        Map<String, String> certificateData = new HashMap<>();
+        try {
+            X509Certificate certificate = keyValidator.getCertificate(caminhoCertificado);
+            String certVersion = certificate.getVersion() == 3 ? "V3" : "V1";
+            String certSerialNumber = certificate.getSerialNumber().toString();
+            String certExpirationDate = certificate.getNotAfter().toString();
+            String certSignatureAlgotithm = certificate.getSigAlgName();
+            String certIssuer = certificate.getIssuerX500Principal().getName();
+            String certSubject = certificate.getSubjectX500Principal().getName();
+            String certEmail = keyValidator.getLoginFromCertificate(certificate);
+
+            certificateData.put("Version", certVersion);
+            certificateData.put("Serial Number", certSerialNumber);
+            certificateData.put("Expiration Date", certExpirationDate);
+            certificateData.put("Signature Algorithm", certSignatureAlgotithm);
+            certificateData.put("Issuer", certIssuer);
+            certificateData.put("Subject", certSubject);
+            certificateData.put("Email", certEmail);
+
+        } catch (Exception e) {
+            System.out.println("Erro ao obter os dados do certificado: " + e.getMessage());
+        }
+        return certificateData;
     }
 
     public void cadastrarUsuario(String caminhoCertificado, String caminhoChavePrivada, String fraseSecreta, String senha) {        
@@ -69,7 +109,15 @@ public class Cadastro {
             String login = keyValidator.getLoginFromCertificate(certificate);
             System.out.println("Login: " + login);
 
-            User user = new User(login, senha, fraseSecreta);
+            // Gerar um salt aleatório
+            java.security.SecureRandom random = new java.security.SecureRandom();
+            byte[] salt = new byte[16]; // O tamanho do salt para bcrypt é 16 bytes
+            random.nextBytes(salt);
+
+            // Gerar o hash da senha usando o salt aleatório e o custo especificado
+            String hashedPassword = OpenBSDBCrypt.generate(senha.toCharArray(), salt, SALT_COST);
+
+            User user = new User(login, hashedPassword, fraseSecreta);
 
             // Verifica se o usuário já existe
             if (db.userExists(user)) {
