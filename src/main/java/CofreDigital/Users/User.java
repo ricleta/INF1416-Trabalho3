@@ -5,36 +5,31 @@
 
 package CofreDigital.Users;
 
-/*import com.eatthepath:otp-java;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-
-import java.io.File;
-import java.io.IOException;*/
-
 public class User {
     private String email;
     private String senhaPessoal;
     private String fraseSecreta;
     private int total_de_acessos;
+    private String base32TokenKey;
+    private byte[] encryptedtokenKey;
 
-    //from Google authenticator
-    private String token;
-
-    public User(String email, String senhaPessoal, String token, String fraseSecreta) {
+    public User(String email, String senhaPessoal, String base32TokenKey, String fraseSecreta) {
         this.email = email;
         this.senhaPessoal = senhaPessoal;
         this.fraseSecreta = fraseSecreta;
-        this.token = token;
+        this.base32TokenKey = base32TokenKey;
     }
 
     public User(String email, String senhaPessoal, String fraseSecreta) {
         this.email = email;
         this.senhaPessoal = senhaPessoal;
         this.fraseSecreta = fraseSecreta;
+    }
+
+    public User(String email, String senhaPessoal, byte[] encryptedtokenKey) {
+        this.email = email;
+        this.senhaPessoal = senhaPessoal;
+        this.encryptedtokenKey = encryptedtokenKey;
     }
 
     public String getEmail() {
@@ -53,12 +48,12 @@ public class User {
         this.senhaPessoal = senhaPessoal;
     }
 
-    public String getToken() {
-        return token;
+    public String getBase32TokenKey() {
+        return base32TokenKey;
     }
-
-    public void setToken(String token) {
-        this.token = token;
+    
+    public void setBase32TokenKey(String base32TokenKey) {
+        this.base32TokenKey = base32TokenKey;
     }
 
     public String getFraseSecreta() {
@@ -77,15 +72,9 @@ public class User {
         this.total_de_acessos = total_de_acessos;
     }
     
-    public boolean authlogin(){
-        return false;
+    public byte[] getEncryptedtokenKey() {
+        return encryptedtokenKey;
     }
-
-    public boolean authsenhaPessoal(){return false;}
-
-    public boolean authtoken(){return false;}
-
-    public boolean validaFraseSecreta() {return false;}
 }
 
 

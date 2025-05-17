@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 
 import CofreDigital.Cofre;
+import CofreDigital.Users.User;
+
 import javax.swing.JFrame;
 import javax.swing.JPasswordField;
 import javax.swing.JPanel;
@@ -17,12 +19,15 @@ import java.awt.GridLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.Array;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+/*
+ * CofreDigital - Tela de Login com teclado virual para autenticacao da senha
+ */
 public class TelaLogin2 extends JFrame {
     private String currentUserEmail;
+    private User user;
     private int tentativas = 0;
 
     private JPasswordField passwordField;
@@ -36,8 +41,9 @@ public class TelaLogin2 extends JFrame {
     
     private JButton okButton;
 
-    public TelaLogin2(String currentUserEmail) {
-        this.currentUserEmail = currentUserEmail;
+    public TelaLogin2(User user) {
+        this.user = user;
+        this.currentUserEmail = user.getEmail();
         setTitle("Cofre Digital - Autenticação");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -124,8 +130,10 @@ public class TelaLogin2 extends JFrame {
         public void actionPerformed(ActionEvent e) {
             ArrayList<String> passwordList = new ArrayList<>();
             generateCombinations(pressedPairs, 0, "", passwordList);
-            if (Cofre.isPasswordCorrect(currentUserEmail, passwordList)) {
-                JOptionPane.showMessageDialog(TelaLogin2.this, "Senha correta!");
+            String password = Cofre.isPasswordCorrect(currentUserEmail, passwordList);
+            if (password != null) {
+                user.setSenhaPessoal(password);
+                Cofre.authenticateTOTP(user);
                 tentativas = 0;
                 dispose();
             } else {
@@ -158,9 +166,7 @@ public class TelaLogin2 extends JFrame {
         @Override
         public void changedUpdate(DocumentEvent e) {
             // Handle password field changes if needed
-        }
-    
-        
+        }        
     }
 
    private class ClearButtonListener implements ActionListener {

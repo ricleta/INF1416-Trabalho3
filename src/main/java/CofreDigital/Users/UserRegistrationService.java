@@ -3,6 +3,7 @@ package CofreDigital.Users;
 import CofreDigital.DB.DB;
 import CofreDigital.SecurityEncryption.EncryptionUtil;
 import CofreDigital.SecurityEncryption.KeyValidator;
+import CofreDigital.Cofre;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -118,7 +119,10 @@ public class UserRegistrationService {
             // Gerar o hash da senha usando o salt aleatório e o custo especificado
             String hashedPassword = OpenBSDBCrypt.generate(senha.toCharArray(), salt, SALT_COST);
 
-            User user = new User(login, hashedPassword, fraseSecreta);
+            // Cria tokenKey para o TOTP
+            String base32TokenKey = db.generateTokenKey();
+
+            User user = new User(login, hashedPassword, base32TokenKey, fraseSecreta);
 
             // Verifica se o usuário já existe
             if (db.userExists(user)) {
@@ -131,7 +135,17 @@ public class UserRegistrationService {
             System.out.println("User frase secreta: " + user.getFraseSecreta());
 
             //store user + store encrypted private key and PEM certificate in chaveiro table
-            db.addUser(user, encryptedPrivateKey, certificatePEM);
+
+            try {
+                db.addUser(user, encryptedPrivateKey, certificatePEM);
+            }
+            catch (Exception e) {
+                System.out.println("Erro ao cadastrar o usuário: " + e.getMessage());
+                return;
+            }
+
+            // Se usuario foi cadastrado com sucesso, exibe tokenKey
+            Cofre.showTokenKey(base32TokenKey, user.getEmail());
         }
 
     public boolean isPasswordCorrect(String db_password, String attempted_password) {

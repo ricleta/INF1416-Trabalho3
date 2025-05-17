@@ -5,6 +5,7 @@
 
 package CofreDigital.DB;
 
+import CofreDigital.SecurityEncryption.Base32;
 import CofreDigital.Users.User;
 
 import java.io.InputStream;
@@ -12,7 +13,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+
 import java.io.IOException;
+
+import java.security.SecureRandom;
 
 public class DB {
     private static final String DB_URL = "jdbc:sqlite:cofre.db";
@@ -75,7 +83,7 @@ public class DB {
             "email TEXT NOT NULL, " +
             "senhaPessoal TEXT NOT NULL, " +
             "KID INTEGER NOT NULL, " +
-            "token TEXT NOT NULL, " +
+            "tokenKey BLOB NOT NULL, " +
             "FOREIGN KEY (KID) REFERENCES Chaveiro(KID)" +
             ");";
 
@@ -232,16 +240,16 @@ public class DB {
             return;
         }
 
-        // TODO: Remove this and have the token generated correctly
-        user.setToken("token");
+        //gerar token_key do TOTP e criptografar com chave AES-256 gera com SHA1-PRNG da senha pessoal
+        byte[] encryptedtokenKey = generateEncryptedTokenKey(user.getSenhaPessoal(), user.getBase32TokenKey());
 
-        String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, token) VALUES (?, ?, ?, ?)";
+        String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, tokenKey) VALUES (?, ?, ?, ?)";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
             pstmt.setString(1, user.getEmail());
             pstmt.setString(2, user.getSenhaPessoal());
             pstmt.setInt(3, kid);
-            pstmt.setString(4, user.getToken());
+            pstmt.setBytes(4, encryptedtokenKey);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error in addUser: " + e.getMessage());
@@ -285,17 +293,24 @@ public class DB {
         return false;
     }
 
-    public boolean userExists(String email) {
-        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ?";
+    public User getUser(String email) {
+        String query = "SELECT * FROM Usuarios WHERE email = ?";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(query)) {
             pstmt.setString(1, email);
             ResultSet rs = pstmt.executeQuery();
-            return rs.getInt(1) > 0;
+            if (rs.next()) {
+                // For debugging, access after rs.next()
+                byte[] tokenKeyBytes = rs.getBytes("tokenKey"); // Read bytes once
+                
+                return new User(rs.getString("email"), rs.getString("senhaPessoal"), tokenKeyBytes);
+            } else {
+                return null;
+            }
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
-        return false;
+        return null;
     }
 
     public String getUserPasswordHash(String email) {
@@ -312,5 +327,91 @@ public class DB {
         }
         
         return null; // Return null if the user is not found
+    }
+
+    public String generateTokenKey()
+    {
+        final int TOKEN_KEY_SIZE = 20; // 20 bytes for TOTP key
+
+        try {             
+            // Generate a random 20-byte key for TOTP
+            byte[] tokenKey = new byte[TOKEN_KEY_SIZE];
+            SecureRandom secureRandom = new SecureRandom();
+            secureRandom.nextBytes(tokenKey);
+                
+            // Codifica a tokenKey em base32
+            Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);    
+            String base32TokenKey = base32.toString(tokenKey);
+            System.out.println("Base32 Token Key: " + base32TokenKey);
+            
+            return base32TokenKey;
+        } catch (Exception e) {
+            System.err.println("Error generating token key: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private byte[] generateEncryptedTokenKey(String senhaPessoal, String base32TokenKey) {
+        final int AES_KEY_SIZE = 256;
+        final String CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";
+        final String AES_ALGORITHM = "AES";
+        final String PRNG_ALGORITHM = "SHA1PRNG";
+        
+        try {
+            Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);  
+            byte[] tokenKey = base32.fromString(base32TokenKey);
+
+            // Gera chave aes usando senha pessoal e SHA1-PRNG
+            SecureRandom secureRandom = SecureRandom.getInstance(PRNG_ALGORITHM);
+            secureRandom.setSeed(senhaPessoal.getBytes(StandardCharsets.UTF_8));
+    
+            KeyGenerator keyGen = KeyGenerator.getInstance(AES_ALGORITHM);
+            keyGen.init(AES_KEY_SIZE, secureRandom); // AES-256
+            SecretKey aesKey = keyGen.generateKey();
+
+            // Encripta a tokenKey usando AES/ECB/PKCS5Padding
+            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, aesKey);
+
+            byte[] encryptedTokenKey = cipher.doFinal(tokenKey);
+    
+            // Print the encrypted token key
+            System.out.println("Encrypted Token Key: " + base32.toString(encryptedTokenKey));
+
+            return encryptedTokenKey;
+        } catch (Exception e) {
+            System.err.println("Error generating token key: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    public String decryptTokenKey(byte[] encryptedTokenKey, String senhaPessoal) {
+        final int AES_KEY_SIZE = 256;
+        final String CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";
+        final String AES_ALGORITHM = "AES";
+        final String PRNG_ALGORITHM = "SHA1PRNG";
+
+        try {
+            // Gera chave aes usando senha pessoal e SHA1-PRNG
+            SecureRandom secureRandom = SecureRandom.getInstance(PRNG_ALGORITHM);
+            secureRandom.setSeed(senhaPessoal.getBytes(StandardCharsets.UTF_8));
+
+            KeyGenerator keyGen = KeyGenerator.getInstance(AES_ALGORITHM);
+            keyGen.init(AES_KEY_SIZE, secureRandom); // AES-256
+            SecretKey aesKey = keyGen.generateKey();
+
+            // Decripta a tokenKey usando AES/ECB/PKCS5Padding
+            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, aesKey);
+            byte[] decryptedTokenKey = cipher.doFinal(encryptedTokenKey);
+
+            Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);
+            System.out.println("Decrypted Token Key: " + base32.toString(decryptedTokenKey));
+            return base32.toString(decryptedTokenKey);
+        } catch (Exception e) {
+            System.err.println("Error decrypting token key: " + e.getMessage());
+        }
+        return null;
     }
 }
