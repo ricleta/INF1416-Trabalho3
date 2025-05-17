@@ -3,9 +3,10 @@ package CofreDigital.UI;
 import CofreDigital.Cofre;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class TelaCadastro extends JFrame {
     private String loginNameAtual;
@@ -86,9 +87,15 @@ public class TelaCadastro extends JFrame {
         // Painel de Botões
         JPanel painelBotoesCadastro = new JPanel(new FlowLayout());
         JButton btnCadastrar = new JButton("Cadastrar");
+        btnCadastrar.setEnabled(false); // Initially disabled
         JButton btnVoltar = new JButton("Voltar");
 
-        btnCadastrar.addActionListener(e -> Cofre.cadastrarUsuario(
+        // Add DocumentListener to password fields to enable/disable the button based on length
+        DocumentListener passwordLengthListener = createPasswordLengthListener(txtSenha, txtConfirmacaoSenha, btnCadastrar, 8);
+        txtSenha.getDocument().addDocumentListener(passwordLengthListener);
+        txtConfirmacaoSenha.getDocument().addDocumentListener(passwordLengthListener);
+        
+        btnCadastrar.addActionListener(e -> Cofre.confirmaCadastro(
             txtCertificado.getText(),
             txtChavePrivada.getText(),
             new String(txtFraseSecreta.getPassword()),
@@ -97,18 +104,39 @@ public class TelaCadastro extends JFrame {
             new String(txtConfirmacaoSenha.getPassword())
         ));
 
-
         btnVoltar.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Voltando ao menu principal...");
             dispose();
         });
 
         painelBotoesCadastro.add(btnCadastrar);
+        
         painelBotoesCadastro.add(btnVoltar);
 
         contentPane.add(painelBotoesCadastro);
 
         pack();
+    }
+
+    private static DocumentListener createPasswordLengthListener(JPasswordField passwordField,JPasswordField confirmPasswordField, JButton button, int minLength) {
+        return new DocumentListener() {
+            private void updateButtonState() {
+                button.setEnabled(passwordField.getPassword().length >= minLength);
+                button.setEnabled(confirmPasswordField.getPassword().length >= minLength);
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+        };
     }
 
 }

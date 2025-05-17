@@ -17,12 +17,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Cadastro {
+public class UserRegistrationService {
     private static final int SALT_COST = 8;
+    private static final int SALT_LENGTH = 16;
     private DB db;
     private KeyValidator keyValidator;
 
-    public Cadastro(DB db) {
+    public UserRegistrationService(DB db) {
         this.db = db;
         this.keyValidator = new KeyValidator();
         Security.addProvider(new BouncyCastleProvider());
@@ -111,7 +112,7 @@ public class Cadastro {
 
             // Gerar um salt aleatório
             java.security.SecureRandom random = new java.security.SecureRandom();
-            byte[] salt = new byte[16]; // O tamanho do salt para bcrypt é 16 bytes
+            byte[] salt = new byte[SALT_LENGTH]; // O tamanho do salt para bcrypt é 16 bytes
             random.nextBytes(salt);
 
             // Gerar o hash da senha usando o salt aleatório e o custo especificado
@@ -131,6 +132,14 @@ public class Cadastro {
 
             //store user + store encrypted private key and PEM certificate in chaveiro table
             db.addUser(user, encryptedPrivateKey, certificatePEM);
-
         }
+
+    public boolean isPasswordCorrect(String db_password, String attempted_password) {
+        // Verifica se a senha fornecida corresponde à senha armazenada no banco de dados
+        if (OpenBSDBCrypt.checkPassword(db_password, attempted_password.toCharArray())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

@@ -273,16 +273,44 @@ public class DB {
     }
 
     public boolean userExists(User user) {
-        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ? AND senhaPessoal = ?";
+        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ?";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(query)) {
             pstmt.setString(1, user.getEmail());
-            pstmt.setString(2, user.getSenhaPessoal());
             ResultSet rs = pstmt.executeQuery();
             return rs.getInt(1) > 0;
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
         return false;
+    }
+
+    public boolean userExists(String email) {
+        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.getInt(1) > 0;
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public String getUserPasswordHash(String email) {
+        String query = "SELECT senhaPessoal FROM Usuarios WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("senhaPessoal");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        
+        return null; // Return null if the user is not found
     }
 }

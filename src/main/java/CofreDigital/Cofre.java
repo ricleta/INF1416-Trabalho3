@@ -6,6 +6,8 @@
 
 package CofreDigital;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -18,57 +20,90 @@ import java.awt.*;
 import java.io.*;*/
 
 import CofreDigital.DB.DB;
-import CofreDigital.Users.Cadastro;
+import CofreDigital.Users.UserRegistrationService;
 import CofreDigital.UI.TelaPrincipal;
 import CofreDigital.UI.TelaCadastro;
+import CofreDigital.UI.TelaConfirmacao;
+import CofreDigital.UI.TelaLogin1;
+import CofreDigital.UI.TelaLogin2;
 
 public class Cofre{
     private static DB db;
 
     public static void main(String[] args) throws Exception {   
-        
-        //when running for the 1st time, register admin
-    
-        //if not then verify admin credentials
-    
-        //if everything is ok, start to register users
-    
-        //1st step
-    
-        //2nd step
-    
-        //3rd step
-    
-        //if everything is ok, show menu
         db = new DB();
         // TelaPrincipal tela = new TelaPrincipal("admin", "admins", "Admin", 1);
         // tela.setVisible(true);
 
-        TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, new String[]{"Grupo1", "Grupo2"});
+        // TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, new String[]{"Grupo1", "Grupo2"});
+        // tela.setVisible(true);
+
+        TelaLogin1 tela = new TelaLogin1();
+        tela.setVisible(true);
+
+        // TelaLogin2 tela = new TelaLogin2("admin@inf1416.puc-rio.br");
+        // tela.setVisible(true);
+    }
+
+    public static void confirmaCadastro(String pathCertificado, String chavePrivada, String fraseSecreta, String grupo, String senha, String confirmacaoSenha) {
+        if (!senha.equals(confirmacaoSenha)) {
+            System.out.println("As senhas não coincidem.");
+            return;
+        }
+
+        db = new DB();
+
+        UserRegistrationService cadastro = new UserRegistrationService(db);
+
+        Map<String, String> certificateData = cadastro.getCertificateData(pathCertificado);
+
+        for (Map.Entry<String, String> entry : certificateData.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+
+        TelaConfirmacao tela = new TelaConfirmacao(certificateData, pathCertificado, chavePrivada, fraseSecreta, grupo, senha);
+        tela.setVisible(true);
+    }
+    
+    public static void cadastrarUsuario(String certificado, String chavePrivada, String fraseSecreta, String grupo, String senha) {
+      db = new DB();
+
+      UserRegistrationService cadastro = new UserRegistrationService(db);
+
+      cadastro.cadastrarUsuario(certificado, chavePrivada, fraseSecreta, senha);
+    }
+
+    public static void checaEmailValido(String email) {
+        db = new DB();
+ 
+        if (db.userExists(email.trim())) {
+            System.out.println("Email valido.");
+        } else {
+            System.out.println("Nao encontrado.");
+        }
+    }
+
+    public static void authenticatePassword(String email) {
+        db = new DB();
+
+        TelaLogin2 tela = new TelaLogin2(email);
         tela.setVisible(true);
     }
 
-    public static void cadastrarUsuario(String certificado, String chavePrivada, String fraseSecreta, String grupo, String senha, String confirmacaoSenha) {
-      if (!senha.equals(confirmacaoSenha)) {
-        System.out.println("As senhas não coincidem.");
-        return;
-      }
+    public static boolean isPasswordCorrect(String email, ArrayList<String> possiblePasswords) {
+        db = new DB();
+        String senha_db = db.getUserPasswordHash(email);
+        UserRegistrationService cadastro = new UserRegistrationService(db);
 
-      db = new DB();
-
-      Cadastro cadastro = new Cadastro(db);
-
-      Map<String, String> certificateData = cadastro.getCertificateData(certificado);
-
-      for (Map.Entry<String, String> entry : certificateData.entrySet()) {
-          System.out.println(entry.getKey() + ": " + entry.getValue());
-      }
-      
-      cadastro.cadastrarUsuario(certificado, chavePrivada, fraseSecreta, senha);
+        for (String password : possiblePasswords) {          
+          if (cadastro.isPasswordCorrect(senha_db, password)) {
+              return true;
+          }
+        }
+        return false;
     }
 }
 
-//one method for each authentication step?
 
 
 
