@@ -4,6 +4,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -16,7 +17,11 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 
 import CofreDigital.Cofre;
+import CofreDigital.Users.User;
 
+/*
+ * CofreDigital - Tela de Login para autenticacao do email do usuario
+ */
 public class TelaLogin1 extends JFrame {
     // Constructor
     public TelaLogin1() {
@@ -77,8 +82,16 @@ public class TelaLogin1 extends JFrame {
             public void actionPerformed(ActionEvent evt) {
                 String loginName = loginField.getText();
 
-                Cofre.authenticatePassword(loginName);
-                dispose();
+                User user = Cofre.checaEmailValido(loginName);
+                if (user != null)
+                {
+                    Cofre.authenticatePassword(user);
+                    dispose();
+                }
+                else
+                {
+                    JOptionPane.showMessageDialog(null, "Email não encontrado.", "Erro", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
