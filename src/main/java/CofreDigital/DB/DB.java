@@ -294,11 +294,10 @@ public class DB {
     }
 
     public boolean userExists(User user) {
-        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ? AND senhaPessoal = ?";
+        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ?";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(query)) {
             pstmt.setString(1, user.getEmail());
-            pstmt.setString(2, user.getSenhaPessoal());
             ResultSet rs = pstmt.executeQuery();
             return rs.getInt(1) > 0;
         } catch (SQLException e) {
@@ -307,69 +306,32 @@ public class DB {
         return false;
     }
 
-    public String getUserEmail(String email) {
-        String query = "SELECT email FROM Usuarios WHERE email = ?";
+    public boolean userExists(String email) {
+        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.getInt(1) > 0;
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public String getUserPasswordHash(String email) {
+        String query = "SELECT senhaPessoal FROM Usuarios WHERE email = ?";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(query)) {
             pstmt.setString(1, email);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                return rs.getString("email");
+                return rs.getString("senhaPessoal");
             }
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
-        return null;
-    }
-
-    public String getUserSenhaPessoal(String senha) {
-        String query = "SELECT senhaPessoal FROM Usuarios WHERE senhaPessoal = ?";
-        try (Connection con = DriverManager.getConnection(DB_URL);
-                PreparedStatement pstmt = con.prepareStatement(query)) {
-            pstmt.setString(1, senha);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("senhaPessoal");
-            }
-        } 
         
-        catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-        return null;
-    }
-
-    public String getUserToken(String token){
-        String query = "SELECT token FROM Usuarios WHERE token = ?";
-        try (Connection con = DriverManager.getConnection(DB_URL);
-                PreparedStatement pstmt = con.prepareStatement(query)) {
-            pstmt.setString(1, token);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("token");
-            }
-        } 
-        
-        catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-        return null;
-    }
-
-    public String getUserFraseSecreta(String fraseSecreta) {
-        String query = "SELECT fraseSecreta FROM Usuarios WHERE fraseSecreta = ?";
-        try (Connection con = DriverManager.getConnection(DB_URL);
-                PreparedStatement pstmt = con.prepareStatement(query)) {
-            pstmt.setString(1, fraseSecreta);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("fraseSecreta");
-            }
-        } 
-        
-        catch (SQLException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-        return null;
+        return null; // Return null if the user is not found
     }
 }
