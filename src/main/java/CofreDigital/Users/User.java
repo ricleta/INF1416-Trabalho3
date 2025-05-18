@@ -7,14 +7,16 @@ package CofreDigital.Users;
 
 public class User {
     private String email;
-    private String senhaPessoal;
+    private String hashSenhaPessoal;
     private String fraseSecreta;
+    private String senhaPessoal;
     private int total_de_acessos;
     private String base32TokenKey;
     private byte[] encryptedtokenKey;
 
-    public User(String email, String senhaPessoal, String base32TokenKey, String fraseSecreta) {
+    public User(String email, String senhaPessoal, String hashSenhaPessoal, String base32TokenKey, String fraseSecreta) {
         this.email = email;
+        this.hashSenhaPessoal = hashSenhaPessoal;
         this.senhaPessoal = senhaPessoal;
         this.fraseSecreta = fraseSecreta;
         this.base32TokenKey = base32TokenKey;
@@ -22,13 +24,13 @@ public class User {
 
     public User(String email, String senhaPessoal, String fraseSecreta) {
         this.email = email;
-        this.senhaPessoal = senhaPessoal;
+        this.hashSenhaPessoal = senhaPessoal;
         this.fraseSecreta = fraseSecreta;
     }
 
     public User(String email, String senhaPessoal, byte[] encryptedtokenKey) {
         this.email = email;
-        this.senhaPessoal = senhaPessoal;
+        this.hashSenhaPessoal = senhaPessoal;
         this.encryptedtokenKey = encryptedtokenKey;
     }
 
@@ -40,12 +42,12 @@ public class User {
         this.email = email;
     }
 
-    public String getSenhaPessoal() {
-        return senhaPessoal;
+    public String getHashSenhaPessoal() {
+        return hashSenhaPessoal;
     }
 
-    public void setSenhaPessoal(String senhaPessoal) {
-        this.senhaPessoal = senhaPessoal;
+    public void setHashSenhaPessoal(String senhaPessoal) {
+        this.hashSenhaPessoal = senhaPessoal;
     }
 
     public String getBase32TokenKey() {
@@ -74,6 +76,11 @@ public class User {
     
     public byte[] getEncryptedtokenKey() {
         return encryptedtokenKey;
+    }
+
+    public String getSenhaPessoal()
+    {
+        return senhaPessoal;
     }
 }
 

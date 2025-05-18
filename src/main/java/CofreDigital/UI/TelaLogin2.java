@@ -132,7 +132,7 @@ public class TelaLogin2 extends JFrame {
             generateCombinations(pressedPairs, 0, "", passwordList);
             String password = Cofre.isPasswordCorrect(currentUserEmail, passwordList);
             if (password != null) {
-                user.setSenhaPessoal(password);
+                user.setHashSenhaPessoal(password);
                 Cofre.authenticateTOTP(user);
                 tentativas = 0;
                 dispose();

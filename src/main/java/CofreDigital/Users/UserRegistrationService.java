@@ -122,7 +122,7 @@ public class UserRegistrationService {
             // Cria tokenKey para o TOTP
             String base32TokenKey = db.generateTokenKey();
 
-            User user = new User(login, hashedPassword, base32TokenKey, fraseSecreta);
+            User user = new User(login, senha, hashedPassword, base32TokenKey, fraseSecreta);
 
             // Verifica se o usuário já existe
             if (db.userExists(user)) {
@@ -131,7 +131,7 @@ public class UserRegistrationService {
             }
 
             System.out.println("User email: " + user.getEmail());
-            System.out.println("User senha: " + user.getSenhaPessoal());
+            System.out.println("User senha: " + user.getHashSenhaPessoal());
             System.out.println("User frase secreta: " + user.getFraseSecreta());
 
             //store user + store encrypted private key and PEM certificate in chaveiro table

@@ -21,6 +21,8 @@ import CofreDigital.UI.TelaLogin2;
 import CofreDigital.UI.TelaLogin3;
 import CofreDigital.UI.TelaQRCode;
 
+import CofreDigital.SecurityEncryption.Base32;
+
 public class Cofre{
     private static DB db;
 
@@ -96,11 +98,12 @@ public class Cofre{
         }
         final long TIME_STEP = 30;
 
+        Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);   
+        System.out.println("Chave TOTP: " + base32.toString(user.getEncryptedtokenKey()));
         String base32TokenKey = null;
-        System.out.println("Senha pessoal: " + user.getSenhaPessoal());
+        System.out.println("Senha pessoal: " + user.getHashSenhaPessoal());
         try {
-          // System.out.println("Encrypted token key: " + user.getEncryptedtokenKey().toString());
-          base32TokenKey = db.decryptTokenKey(user.getEncryptedtokenKey(), user.getSenhaPessoal());
+          base32TokenKey = db.decryptTokenKey(user.getEncryptedtokenKey(), user.getHashSenhaPessoal());
         }
         catch (Exception e) {
           System.out.println("Erro ao descriptografar a chave TOTP: " + e.getMessage());

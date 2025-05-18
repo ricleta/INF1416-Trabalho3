@@ -27,6 +27,10 @@ public class DB {
     private static final String CSV_FILE_PATH = "/CofreDigital/DB/mensagens.csv";
     private static final String [] GROUP_NAMES = {"admins", "usuarios"};
     private static final String [] GROUP_IDS = {"1", "2"}; // IDs dos grupos, 1 para admins e 2 para usuarios
+    
+
+    private String senhaEncriptar;
+    private String senhaDecriptar;  
 
 
     public DB() {
@@ -247,7 +251,7 @@ public class DB {
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
             pstmt.setString(1, user.getEmail());
-            pstmt.setString(2, user.getSenhaPessoal());
+            pstmt.setString(2, user.getHashSenhaPessoal());
             pstmt.setInt(3, kid);
             pstmt.setBytes(4, encryptedtokenKey);
             pstmt.executeUpdate();
@@ -357,6 +361,9 @@ public class DB {
         final String AES_ALGORITHM = "AES";
         final String PRNG_ALGORITHM = "SHA1PRNG";
         
+        System.out.println("Encriptar Senha pessoal: " + senhaPessoal);
+        // senhaPessoal = "12345678";
+        senhaEncriptar = senhaPessoal;
         try {
             Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);  
             byte[] tokenKey = base32.fromString(base32TokenKey);
@@ -378,6 +385,10 @@ public class DB {
             // Print the encrypted token key
             System.out.println("Encrypted Token Key: " + base32.toString(encryptedTokenKey));
 
+            cipher.init(Cipher.DECRYPT_MODE, aesKey);
+            byte[] decryptedTokenKey = cipher.doFinal(encryptedTokenKey);
+            System.out.println("Decrypted Token Key: " + base32.toString(decryptedTokenKey));
+
             return encryptedTokenKey;
         } catch (Exception e) {
             System.err.println("Error generating token key: " + e.getMessage());
@@ -392,7 +403,28 @@ public class DB {
         final String AES_ALGORITHM = "AES";
         final String PRNG_ALGORITHM = "SHA1PRNG";
 
+        senhaPessoal = senhaPessoal.trim();
+        senhaEncriptar = senhaEncriptar.trim();
+        System.out.println("Decpr Senha pessoal: " + java.util.Arrays.toString(senhaPessoal.getBytes(StandardCharsets.UTF_8)));
+        System.out.println("Decpr Senha encriptar: " + java.util.Arrays.toString(senhaEncriptar.getBytes(StandardCharsets.UTF_8)));
+
+
+        if (senhaPessoal.equals(senhaEncriptar)) {
+            System.out.println("Senha pessoal correta.");
+        } else {
+            
+            System.out.println("Senha pessoal incorreta.");
+        }
+
+        if (senhaPessoal == senhaEncriptar) {
+            System.out.println("== Senha pessoal correta.");
+        } else {
+            System.out.println("== Senha pessoal incorreta.");
+        }
+
         try {
+            System.out.println("Senha pessoal: " + senhaPessoal);
+            // senhaPessoal = "12345678";
             // Gera chave aes usando senha pessoal e SHA1-PRNG
             SecureRandom secureRandom = SecureRandom.getInstance(PRNG_ALGORITHM);
             secureRandom.setSeed(senhaPessoal.getBytes(StandardCharsets.UTF_8));
