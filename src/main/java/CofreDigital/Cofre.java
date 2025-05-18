@@ -20,22 +20,39 @@ import CofreDigital.UI.TelaLogin1;
 import CofreDigital.UI.TelaLogin2;
 import CofreDigital.UI.TelaLogin3;
 import CofreDigital.UI.TelaQRCode;
+import CofreDigital.UI.TelaSaida;
 
 import CofreDigital.SecurityEncryption.Base32;
 
 public class Cofre{
     private static DB db;
+    private static TelaPrincipal telaPrincipal;
+    private static TelaCadastro telaCadastro;
+    private static TelaLogin1 telaLogin1;
+    private static TelaLogin2 telaLogin2;
+    private static TelaLogin3 telaLogin3;
+    private static TelaQRCode telaQRCode;
+    private static TelaConfirmacao telaConfirmacao;
+    private static TelaSaida telaSaida;
 
     public static void main(String[] args) throws Exception {   
         db = new DB();
         // TelaPrincipal tela = new TelaPrincipal("admin", "admins", "Admin", 1);
         // tela.setVisible(true);
 
-        TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, new String[]{"Grupo1", "Grupo2"});
-        tela.setVisible(true);
+        if (db.isAdminRegistered()) {
+            // System.out.println("Admin já cadastrado.");
+            showLoginScreen();
+        } else {
+            // System.out.println("Admin não cadastrado.");
+            TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, getGrupos());
+            tela.setVisible(true);
+        }
+        // TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, getGrupos());
+        // tela.setVisible(true);
 
-        TelaLogin1 tela1 = new TelaLogin1();
-        tela1.setVisible(true);
+        // TelaLogin1 tela1 = new TelaLogin1();
+        // tela1.setVisible(true);
 
         // TelaLogin2 tela = new TelaLogin2("admin@inf1416.puc-rio.br");
         // tela.setVisible(true);
@@ -71,7 +88,7 @@ public class Cofre{
 
       UserRegistrationService cadastro = new UserRegistrationService(db);
 
-      cadastro.cadastrarUsuario(certificado, chavePrivada, fraseSecreta, senha);
+      cadastro.cadastrarUsuario(certificado, chavePrivada, fraseSecreta, senha, grupo);
     }
 
     public static User checaEmailValido(String email) {
@@ -91,10 +108,10 @@ public class Cofre{
         tela.setVisible(true);
     }
 
-    public static void validaTOTP(User user, String totpCode) {
+    public static boolean validaTOTP(User user, String totpCode) {
         if (user.getEncryptedtokenKey() == null) {
             System.out.println("Usuário não encontrado.");
-            return;
+            return false;
         }
         final long TIME_STEP = 30;
 
@@ -107,7 +124,7 @@ public class Cofre{
         }
         catch (Exception e) {
           System.out.println("Erro ao descriptografar a chave TOTP: " + e.getMessage());
-          return;
+          return false;
         }
 
         String code = null;
@@ -118,16 +135,45 @@ public class Cofre{
         }
         catch (Exception e) {
           System.out.println("Erro ao gerar o código TOTP: " + e.getMessage());
-          return;
+          return false;
         }
 
         if (code.equals(totpCode)) {
-            System.out.println("Código TOTP válido.");
-            // TelaPrincipal tela = new TelaPrincipal(user);
-            // tela.setVisible(true);
+            // System.out.println("Código TOTP válido.");
+            return true;
         } else {
-            System.out.println("Código TOTP inválido.");
+            // System.out.println("Código TOTP inválido.");
+            return false;
         }
+    }
+
+    public static void showMenuPrincipal(User user) {
+        db.updateAccessCount(user);
+        TelaPrincipal tela = new TelaPrincipal(user);
+        tela.setVisible(true);
+    }
+
+    public static void showLoginScreen() {
+        TelaLogin1 tela = new TelaLogin1();
+        tela.setVisible(true);
+    }
+
+    public static void showExitScreen(User user) {
+      if (user == null) {
+        System.out.println("Error: User is null in showTelaCadastro");
+        return; // Or show an error dialog
+    }
+        TelaSaida tela = new TelaSaida(user);
+        tela.setVisible(true);
+    }
+
+    public static void showTelaCadastro(User usuario) {
+      if (usuario == null) {
+        System.out.println("Error: User is null in showTelaCadastro");
+        return; // Or show an error dialog
+    }
+        TelaCadastro telaCadastro = new TelaCadastro(usuario, getGrupos());
+        telaCadastro.setVisible(true);
     }
 
     public static String isPasswordCorrect(String email, ArrayList<String> possiblePasswords) {
@@ -146,6 +192,10 @@ public class Cofre{
     {
         TelaQRCode tela = new TelaQRCode(base32TokenKey, email);
         tela.setVisible(true);
+    }
+
+    public static String[] getGrupos() {
+        return db.getGrupos();
     }
 }
 

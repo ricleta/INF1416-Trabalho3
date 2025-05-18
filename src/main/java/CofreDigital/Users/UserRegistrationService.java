@@ -64,7 +64,7 @@ public class UserRegistrationService {
         return certificateData;
     }
 
-    public void cadastrarUsuario(String caminhoCertificado, String caminhoChavePrivada, String fraseSecreta, String senha) {        
+    public void cadastrarUsuario(String caminhoCertificado, String caminhoChavePrivada, String fraseSecreta, String senha, String grupo) {        
         try {
             boolean isValid = keyValidator.validatePrivateKey(caminhoCertificado, caminhoChavePrivada, fraseSecreta);
             if (!isValid) {
@@ -122,7 +122,7 @@ public class UserRegistrationService {
             // Cria tokenKey para o TOTP
             String base32TokenKey = db.generateTokenKey();
 
-            User user = new User(login, senha, hashedPassword, base32TokenKey, fraseSecreta);
+            User user = new User(login, senha, hashedPassword, base32TokenKey, fraseSecreta, grupo);
 
             // Verifica se o usuário já existe
             if (db.userExists(user)) {

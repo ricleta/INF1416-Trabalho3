@@ -15,6 +15,7 @@ CofreDigital/DB/DB.class
 CofreDigital/UI/TelaLogin3.class
 CofreDigital/SecurityEncryption/KeyValidator.class
 CofreDigital/UI/TelaLogin1.class
+CofreDigital/UI/TelaSaida.class
 CofreDigital/SecurityEncryption/TOTP.class
 CofreDigital/Cofre.class
 CofreDigital/UI/TelaLogin1$3.class

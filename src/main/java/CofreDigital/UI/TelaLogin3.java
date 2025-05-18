@@ -52,7 +52,11 @@ public class TelaLogin3 extends JFrame{
             String totpCode = txtTOTPField.getText();
             if (totpCode.length() == TOTPCodeSize) {
                 // Call the method to validate the TOTP code
-                Cofre.validaTOTP(user, totpCode);
+                if (Cofre.validaTOTP(user, totpCode))
+                {
+                    Cofre.showMenuPrincipal(user);
+                    dispose(); // Fecha a tela de login
+                }
             } else {
                 System.out.println("O código TOTP deve ter " + TOTPCodeSize + " dígitos.");
             }

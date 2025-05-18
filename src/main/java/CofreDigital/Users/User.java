@@ -7,31 +7,42 @@ package CofreDigital.Users;
 
 public class User {
     private String email;
+    private String nome;
+
     private String hashSenhaPessoal;
-    private String fraseSecreta;
     private String senhaPessoal;
+    
+    private String fraseSecreta;
+    
     private int total_de_acessos;
+    private int total_consultas;
+    
     private String base32TokenKey;
     private byte[] encryptedtokenKey;
 
-    public User(String email, String senhaPessoal, String hashSenhaPessoal, String base32TokenKey, String fraseSecreta) {
-        this.email = email;
-        this.hashSenhaPessoal = hashSenhaPessoal;
+    private String grupo;
+
+    public User(String email, String senhaPessoal, String hashSenhaPessoal, String base32TokenKey, String fraseSecreta, String grupo) {
+        setEmail(email);
+        setHashSenhaPessoal(hashSenhaPessoal);
         this.senhaPessoal = senhaPessoal;
-        this.fraseSecreta = fraseSecreta;
-        this.base32TokenKey = base32TokenKey;
+        setFraseSecreta(fraseSecreta);
+        setBase32TokenKey(base32TokenKey);
+        this.grupo = grupo;
     }
 
     public User(String email, String senhaPessoal, String fraseSecreta) {
-        this.email = email;
-        this.hashSenhaPessoal = senhaPessoal;
-        this.fraseSecreta = fraseSecreta;
+        setEmail(email);
+        setHashSenhaPessoal(senhaPessoal);
+        setFraseSecreta(fraseSecreta);
     }
 
-    public User(String email, String senhaPessoal, byte[] encryptedtokenKey) {
-        this.email = email;
-        this.hashSenhaPessoal = senhaPessoal;
+    public User(String email, String senhaPessoal, byte[] encryptedtokenKey, String grupo, int total_de_acessos) {
+        setEmail(email);
+        setHashSenhaPessoal(senhaPessoal);
         this.encryptedtokenKey = encryptedtokenKey;
+        this.grupo = grupo;
+        setTotal_de_acessos(total_de_acessos);
     }
 
     public String getEmail() {
@@ -40,6 +51,7 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+        setNome();
     }
 
     public String getHashSenhaPessoal() {
@@ -81,6 +93,22 @@ public class User {
     public String getSenhaPessoal()
     {
         return senhaPessoal;
+    }
+
+    public String getGrupo()
+    {
+        return grupo;
+    }
+
+    private void setNome()
+    {
+        // Extrai o nome do email (parte antes do '@')
+        this.nome = email.substring(0, email.indexOf('@'));
+    }
+
+    public String getNome()
+    {
+        return nome;
     }
 }
 
