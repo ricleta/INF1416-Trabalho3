@@ -8,6 +8,7 @@ package CofreDigital;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.List;
 
 import CofreDigital.DB.DB;
 import CofreDigital.SecurityEncryption.TOTP;
@@ -21,19 +22,13 @@ import CofreDigital.UI.TelaLogin2;
 import CofreDigital.UI.TelaLogin3;
 import CofreDigital.UI.TelaQRCode;
 import CofreDigital.UI.TelaSaida;
+import CofreDigital.UI.TelaConsulta;
 
 import CofreDigital.SecurityEncryption.Base32;
+import CofreDigital.SecurityEncryption.KeyValidator;
 
 public class Cofre{
     private static DB db;
-    private static TelaPrincipal telaPrincipal;
-    private static TelaCadastro telaCadastro;
-    private static TelaLogin1 telaLogin1;
-    private static TelaLogin2 telaLogin2;
-    private static TelaLogin3 telaLogin3;
-    private static TelaQRCode telaQRCode;
-    private static TelaConfirmacao telaConfirmacao;
-    private static TelaSaida telaSaida;
 
     public static void main(String[] args) throws Exception {   
         db = new DB();
@@ -162,7 +157,7 @@ public class Cofre{
       if (user == null) {
         System.out.println("Error: User is null in showTelaCadastro");
         return; // Or show an error dialog
-    }
+      }
         TelaSaida tela = new TelaSaida(user);
         tela.setVisible(true);
     }
@@ -171,9 +166,20 @@ public class Cofre{
       if (usuario == null) {
         System.out.println("Error: User is null in showTelaCadastro");
         return; // Or show an error dialog
+      }
+      
+      TelaCadastro telaCadastro = new TelaCadastro(usuario, getGrupos());
+      telaCadastro.setVisible(true);
     }
-        TelaCadastro telaCadastro = new TelaCadastro(usuario, getGrupos());
-        telaCadastro.setVisible(true);
+
+    public static void showTelaConsulta(User usuario) {
+      if (usuario == null) {
+        System.out.println("Error: User is null in showTelaConsulta");
+        return; // Or show an error dialog
+      }
+      
+      TelaConsulta tela = new TelaConsulta(usuario);
+      tela.setVisible(true);
     }
 
     public static String isPasswordCorrect(String email, ArrayList<String> possiblePasswords) {
@@ -196,6 +202,35 @@ public class Cofre{
 
     public static String[] getGrupos() {
         return db.getGrupos();
+    }
+
+    public static List<String[]> listFiles(User usuario, String adminPassphrase) {
+        db.updateTotalConsultas(usuario);
+        KeyValidator keyValidator = new KeyValidator();
+
+        List<String[]> files = keyValidator.listFiles(usuario.getEmail(), usuario.getFraseSecreta(), adminPassphrase);
+        return files;
+    }
+
+    public static byte[] getDBAdminPrivateKey()
+    {
+      return db.getAdminPrivateKey();
+    }
+
+    public static String getDBAdminCert()
+    {
+      return db.getAdminCert();
+    }
+
+    public static void abrirArquivoSecreto(String nomeArquivo, String fileOwner, String loginNameAtual, String fraseSecretaUsuario, String extensao) {
+        KeyValidator keyValidator = new KeyValidator();
+        keyValidator.abrirArquivoSecreto(nomeArquivo, fileOwner, loginNameAtual, fraseSecretaUsuario, extensao);
+    }
+
+    public static byte [] getUserPrivateKey(String email) {
+        byte [] privatekey = db.getUserPrivateKey(email);
+
+        return privatekey;
     }
 }
 

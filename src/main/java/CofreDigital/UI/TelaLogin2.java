@@ -139,12 +139,14 @@ public class TelaLogin2 extends JFrame {
             } else {
                 tentativas++;
                 JOptionPane.showMessageDialog(TelaLogin2.this, "Senha incorreta. Tentativa " + tentativas + " de 3.");
+                
                 if (tentativas >= 3) {
                     tentativas = 0;
                 }
             }
             passwordField.setText("");
             pressedPairs.clear();
+            okButton.setEnabled(false);
             createNumberButtons();
         }    
     }

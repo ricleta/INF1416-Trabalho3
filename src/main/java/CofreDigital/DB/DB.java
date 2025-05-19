@@ -25,7 +25,7 @@ import java.security.SecureRandom;
 public class DB {
     private static final String DB_URL = "jdbc:sqlite:cofre.db";
     private static final String CSV_FILE_PATH = "/CofreDigital/DB/mensagens.csv";
-    private static final String [] GROUP_NAMES = {"admins", "usuarios"};
+    private static final String [] GROUP_NAMES = {"administrador", "usuario"};
     private static final String [] GROUP_IDS = {"1", "2"}; // IDs dos grupos, 1 para admins e 2 para usuarios
     
     public DB() {
@@ -84,7 +84,8 @@ public class DB {
             "KID INTEGER NOT NULL, " +
             "tokenKey BLOB NOT NULL, " +
             "grupo TEXT NOT NULL, " +
-            "total_acessos INT NOT NULL," + 
+            "total_acessos INT NOT NULL," +
+            "totalConsultas INT NOT NULL," + 
             "FOREIGN KEY (KID) REFERENCES Chaveiro(KID) " +
             ");";
 
@@ -261,7 +262,7 @@ public class DB {
         //gerar token_key do TOTP e criptografar com chave AES-256 gera com SHA1-PRNG da senha pessoal
         byte[] encryptedtokenKey = generateEncryptedTokenKey(user.getSenhaPessoal(), user.getBase32TokenKey());
 
-        String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, tokenKey, grupo, total_acessos) VALUES (?, ?, ?, ?, ?, ?)";
+        String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, tokenKey, grupo, total_acessos, totalConsultas) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
             pstmt.setString(1, user.getEmail());
@@ -270,6 +271,7 @@ public class DB {
             pstmt.setBytes(4, encryptedtokenKey);
             pstmt.setString(5, user.getGrupo());
             pstmt.setInt(6, 0);
+            pstmt.setInt(7, 0);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error in addUser: " + e.getMessage());
@@ -277,7 +279,7 @@ public class DB {
     }
 
     public void updateAccessCount(User user) {
-        user.setTotal_de_acessos(user.getTotal_de_acessos() + 1);
+        user.setTotalAcessos(user.getTotalAcessos() + 1);
 
         String queryUpdateAccessCount = "UPDATE Usuarios SET total_acessos = total_acessos + 1 WHERE email = ?";
         try (Connection con = DriverManager.getConnection(DB_URL);
@@ -288,6 +290,20 @@ public class DB {
             System.err.println("Error in updateAccessCount: " + e.getMessage());
         }
     }
+
+    public void updateTotalConsultas(User user) {
+        user.setTotalConsultas(user.getTotalConsultas() + 1);
+
+        String queryUpdateAccessCount = "UPDATE Usuarios SET totalConsultas = totalConsultas + 1 WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(queryUpdateAccessCount)) {
+            pstmt.setString(1, user.getEmail());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error in updateTotalConsultas: " + e.getMessage());
+        }
+    }
+
 
     public void addLog(String dataHora, int uid, String mid) {
         String queryInsertLog = "INSERT INTO Registros (dataHora, UID, MID) VALUES (?, ?, ?)";
@@ -364,7 +380,7 @@ public class DB {
                 // For debugging, access after rs.next()
                 byte[] tokenKeyBytes = rs.getBytes("tokenKey"); // Read bytes once
                 
-                return new User(rs.getString("email"), rs.getString("senhaPessoal"), tokenKeyBytes, rs.getString("grupo"), rs.getInt("total_acessos"));
+                return new User(rs.getString("email"), rs.getString("senhaPessoal"), tokenKeyBytes, rs.getString("grupo"), rs.getInt("total_acessos"), rs.getInt("totalConsultas"));
             } else {
                 return null;
             }
@@ -382,6 +398,22 @@ public class DB {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getString("senhaPessoal");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        
+        return null; // Return null if the user is not found
+    }
+
+    public byte [] getUserPrivateKey(String email) {
+        String query = "SELECT chavePrivada FROM Chaveiro WHERE KID = (SELECT KID FROM Usuarios WHERE email = ?)";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBytes("chavePrivada");
             }
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
@@ -511,5 +543,74 @@ public class DB {
             System.err.println("Error getting groups: " + e.getMessage());
         }
         return null;
+    }
+
+    public byte[] getAdminPrivateKey()
+    {
+        String query = "SELECT KID FROM Usuarios WHERE UID = 1";
+        int kid = -1;
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) {
+                kid = rs.getInt("KID");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin private key: " + e.getMessage());
+        }
+
+        if (kid == -1) {
+            System.out.println("Admin not found");
+            return null;
+        }
+
+        String query2 = "SELECT chavePrivada FROM Chaveiro WHERE KID = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query2)) {
+            pstmt.setInt(1, kid);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBytes("chavePrivada");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin private key: " + e.getMessage());
+        }
+
+        return null; // Return null if the user is not found
+    }
+
+    public String getAdminCert()
+    {
+        String query = "SELECT KID FROM Usuarios WHERE UID = 1";
+        int kid = -1;
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) {
+                kid = rs.getInt("KID");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin certificate: " + e.getMessage());
+        }
+
+        if (kid == -1) {
+            System.out.println("Admin not found");
+            return null;
+        }
+
+        String query2 = "SELECT certificadoDigital FROM Chaveiro WHERE KID = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query2)) {
+            pstmt.setInt(1, kid);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("certificadoDigital");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin certificate: " + e.getMessage());
+        }
+
+        return null; // Return null if the user is not found
     }
 }

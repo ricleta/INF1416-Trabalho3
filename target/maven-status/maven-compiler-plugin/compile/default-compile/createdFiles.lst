@@ -2,9 +2,9 @@ CofreDigital/UI/TelaQRCode.class
 CofreDigital/UI/TelaQRCode$1.class
 CofreDigital/SecurityEncryption/Base32.class
 CofreDigital/UI/TelaCadastro.class
-CofreDigital/SecurityEncryption/EncryptionUtil.class
 CofreDigital/UI/TelaLogin2$ClearButtonListener.class
 CofreDigital/UI/TelaCadastro$1.class
+CofreDigital/UI/TelaConsulta$2.class
 CofreDigital/SecurityEncryption/Base32$Alphabet.class
 CofreDigital/UI/TelaLogin1$2.class
 CofreDigital/UI/TelaLogin2$passwordFieldDocumentListener.class
@@ -19,9 +19,11 @@ CofreDigital/UI/TelaSaida.class
 CofreDigital/SecurityEncryption/TOTP.class
 CofreDigital/Cofre.class
 CofreDigital/UI/TelaLogin1$3.class
+CofreDigital/UI/TelaConsulta.class
 CofreDigital/Users/UserRegistrationService.class
 CofreDigital/UI/TelaLogin2$OkButtonListener.class
 CofreDigital/UI/TelaPrincipal.class
 CofreDigital/UI/TelaLogin2$1.class
 CofreDigital/UI/TelaConfirmacao.class
 CofreDigital/UI/TelaLogin1$1.class
+CofreDigital/UI/TelaConsulta$1.class

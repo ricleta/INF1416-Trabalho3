@@ -22,7 +22,7 @@ public class TelaSaida extends JFrame {
         this.loginNameUsuario = usuario.getEmail();
         this.GrupoUsuario = usuario.getGrupo();
         this.NomeUsuario = usuario.getNome();
-        this.total_de_acessos_usuario = usuario.getTotal_de_acessos();
+        this.total_de_acessos_usuario = usuario.getTotalAcessos();
         this.usuario = usuario;
 
         configuarTela();

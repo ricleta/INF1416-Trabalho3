@@ -1,7 +1,6 @@
 package CofreDigital.Users;
 
 import CofreDigital.DB.DB;
-import CofreDigital.SecurityEncryption.EncryptionUtil;
 import CofreDigital.SecurityEncryption.KeyValidator;
 import CofreDigital.Cofre;
 
@@ -74,19 +73,13 @@ public class UserRegistrationService {
         }
         catch (Exception e) {
             System.out.println("Erro ao validar a chave privada: " + e.getMessage());
-            return;
+            return; 
         }
             //assinatura digital foi verificada com sucesso
 
             byte[] privateKeyBytes = null;
-            byte[] encryptedPrivateKey = null;
             try {
-
                 privateKeyBytes = Files.readAllBytes(Paths.get(caminhoChavePrivada));
-                SecretKey encryptionKey = EncryptionUtil.generateKey();
-                encryptedPrivateKey = EncryptionUtil.encrypt(privateKeyBytes, encryptionKey);
-
-                System.out.println("Chave privada criptografada: " + encryptedPrivateKey.toString());
             }
             catch (Exception e) {
                 System.out.println("Erro ao ler a chave privada: " + e.getMessage());
@@ -137,7 +130,7 @@ public class UserRegistrationService {
             //store user + store encrypted private key and PEM certificate in chaveiro table
 
             try {
-                db.addUser(user, encryptedPrivateKey, certificatePEM);
+                db.addUser(user, privateKeyBytes, certificatePEM);
             }
             catch (Exception e) {
                 System.out.println("Erro ao cadastrar o usuário: " + e.getMessage());

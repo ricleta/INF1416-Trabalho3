@@ -20,15 +20,15 @@ public class TelaPrincipal extends JFrame {
         this.loginNameAtual = usuario.getEmail();
         this.nomeGrupoAtual = usuario.getGrupo();
         this.nomeUsuarioAtual = usuario.getNome();
-        this.total_de_acessos_usuario = usuario.getTotal_de_acessos();
+        this.total_de_acessos_usuario = usuario.getTotalAcessos();
         this.usuario = usuario;
 
         System.out.println("Grupo: " + nomeGrupoAtual);
-        if (nomeGrupoAtual.equals("admins"))
+        if (nomeGrupoAtual.equals("administrador"))
         {
             configurarTelaAdmin();
         }
-        else if (nomeGrupoAtual.equals("usuarios"))
+        else if (nomeGrupoAtual.equals("usuario"))
         {
             configurarTelaUser();
         }
@@ -73,7 +73,11 @@ public class TelaPrincipal extends JFrame {
             Cofre.showTelaCadastro(usuario);
         });
         
-        btnConsultFileArchives.addActionListener(e -> JOptionPane.showMessageDialog(this, "Gerando QR Code..."));
+        // Ações dos botões
+        btnConsultFileArchives.addActionListener(e -> {
+            consultaArquivos(usuario);
+            dispose(); // Fecha a tela atual
+        });
         
         btnSair.addActionListener(e -> {
             Cofre.showExitScreen(usuario);
@@ -118,7 +122,10 @@ public class TelaPrincipal extends JFrame {
         JButton btnSair = new JButton("Sair do Sistema");
 
         // Ações dos botões
-        btnConsultFileArchives.addActionListener(e -> JOptionPane.showMessageDialog(this, "Gerando QR Code..."));
+        btnConsultFileArchives.addActionListener(e -> {
+            consultaArquivos(usuario);
+            dispose(); // Fecha a tela atual
+        });
         
         btnSair.addActionListener(e -> {
             Cofre.showExitScreen(usuario);
@@ -131,5 +138,10 @@ public class TelaPrincipal extends JFrame {
         add(painelBotoes, BorderLayout.SOUTH);
         
         pack();
+    }
+
+    private void consultaArquivos(User user) {
+        // Implementar a lógica para consultar arquivos secretos do usuário
+        Cofre.showTelaConsulta(user);
     }
 }

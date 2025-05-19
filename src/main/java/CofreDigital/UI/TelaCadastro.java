@@ -32,7 +32,7 @@ public class TelaCadastro extends JFrame {
         this.loginNameAtual = usuario.getEmail();
         this.nomeGrupoAtual = usuario.getGrupo();
         this.nomeUsuarioAtual = usuario.getNome();
-        this.total_de_usuarios = usuario.getTotal_de_acessos();
+        this.total_de_usuarios = usuario.getTotalAcessos();
         this.grupos = grupos;
         this.usuario = usuario;
 

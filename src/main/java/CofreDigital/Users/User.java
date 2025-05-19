@@ -14,8 +14,8 @@ public class User {
     
     private String fraseSecreta;
     
-    private int total_de_acessos;
-    private int total_consultas;
+    private int totalAcessos;
+    private int totalConsultas;
     
     private String base32TokenKey;
     private byte[] encryptedtokenKey;
@@ -37,12 +37,13 @@ public class User {
         setFraseSecreta(fraseSecreta);
     }
 
-    public User(String email, String senhaPessoal, byte[] encryptedtokenKey, String grupo, int total_de_acessos) {
+    public User(String email, String senhaPessoal, byte[] encryptedtokenKey, String grupo, int total_de_acessos, int totalConsultas) {
         setEmail(email);
         setHashSenhaPessoal(senhaPessoal);
         this.encryptedtokenKey = encryptedtokenKey;
         this.grupo = grupo;
-        setTotal_de_acessos(total_de_acessos);
+        setTotalAcessos(total_de_acessos);
+        setTotalConsultas(totalConsultas);
     }
 
     public String getEmail() {
@@ -78,12 +79,12 @@ public class User {
         this.fraseSecreta = fraseSecreta;
     }
 
-    public int getTotal_de_acessos() {
-        return total_de_acessos;
+    public int getTotalAcessos() {
+        return totalAcessos;
     }
 
-    public void setTotal_de_acessos(int total_de_acessos) {
-        this.total_de_acessos = total_de_acessos;
+    public void setTotalAcessos(int total_de_acessos) {
+        this.totalAcessos = total_de_acessos;
     }
     
     public byte[] getEncryptedtokenKey() {
@@ -109,6 +110,14 @@ public class User {
     public String getNome()
     {
         return nome;
+    }
+
+    public int getTotalConsultas() {
+        return totalConsultas;
+    }
+    
+    public void setTotalConsultas(int totalConsultas) {
+        this.totalConsultas = totalConsultas;
     }
 }
 
