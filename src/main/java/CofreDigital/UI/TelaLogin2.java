@@ -180,6 +180,8 @@ public class TelaLogin2 extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             passwordField.setText("");
+            pressedPairs.clear();
+            okButton.setEnabled(false);
             createNumberButtons();
         }
     }

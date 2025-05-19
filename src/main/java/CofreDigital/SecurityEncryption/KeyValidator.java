@@ -405,9 +405,6 @@ public class KeyValidator {
     }
     
     public boolean abrirArquivoSecreto(String nomeSecreto, String donoArquivo, String login, String fraseSecretaUsuario, String ext) { 
-        // TODO
-        //verifica se o usuario é o dono do arquivo
-        // String donoArquivoDB = db.getUser(login).getEmail();
         if(!donoArquivo.equals(login)) {
             System.out.println("Usuario não tem permissão de acesso ao arquivo");
             return false;
@@ -490,9 +487,9 @@ public class KeyValidator {
         //gravando o arquivo decriptado em um novo arquivo com o nome secreto
         String caminhoArquivoDecriptado = "Files\\" + ext;
         File fileDecriptado = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoDecriptado).toString());
-        try (java.io.FileWriter fw = new java.io.FileWriter(fileDecriptado, false)) {
-            String conteudo = new String(arquivoEncDecripted, "UTF-8");
-            fw.write(conteudo);
+        try (FileOutputStream fos = new FileOutputStream(fileDecriptado, false)) {
+            // String conteudo = new String(arquivoEncDecripted, "UTF-8");
+            fos.write(arquivoEncDecripted);
             System.out.println("Arquivo decriptado (texto) com sucesso: " + fileDecriptado.getAbsolutePath());
             return true;
         } 
