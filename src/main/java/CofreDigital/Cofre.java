@@ -9,6 +9,10 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.List;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+
 import CofreDigital.DB.DB;
 import CofreDigital.SecurityEncryption.TOTP;
 import CofreDigital.Users.UserRegistrationService;
@@ -29,27 +33,23 @@ import CofreDigital.SecurityEncryption.KeyValidator;
 public class Cofre{
     private static DB db;
 
-    public static void main(String[] args) throws Exception {   
+    public static void main(String[] args) throws Exception {  
+        addLogToDB("1001"); // Sistema iniciado
+      
         db = new DB();
         // TelaPrincipal tela = new TelaPrincipal("admin", "admins", "Admin", 1);
         // tela.setVisible(true);
 
         if (db.isAdminRegistered()) {
-            // System.out.println("Admin já cadastrado.");
+            addLogToDB("1005"); // Partida do sistema iniciada para cadastro do administrador. 
+
             showLoginScreen();
         } else {
-            // System.out.println("Admin não cadastrado.");
+            addLogToDB("1006"); // Partida do sistema iniciada para operação normal pelos usuários.  
+
             TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, getGrupos());
             tela.setVisible(true);
         }
-        // TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, getGrupos());
-        // tela.setVisible(true);
-
-        // TelaLogin1 tela1 = new TelaLogin1();
-        // tela1.setVisible(true);
-
-        // TelaLogin2 tela = new TelaLogin2("admin@inf1416.puc-rio.br");
-        // tela.setVisible(true);
     }
 
     public static void confirmaCadastro(String pathCertificado, String chavePrivada, String fraseSecreta, String grupo, String senha, String confirmacaoSenha) {
@@ -142,23 +142,29 @@ public class Cofre{
     }
 
     public static void showMenuPrincipal(User user) {
+        addLogToDB(user.getEmail(), "1003"); // Sessao iniciada para o <user>.
+        addLogToDB(user.getEmail(), "5001"); // Tela principal apresentada para o <user>.
+
         db.updateAccessCount(user);
         TelaPrincipal tela = new TelaPrincipal(user);
         tela.setVisible(true);
     }
 
     public static void showLoginScreen() {
+        addLogToDB("2001"); // Autenticacao etapa 1 iniciada.
+
         TelaLogin1 tela = new TelaLogin1();
         tela.setVisible(true);
     }
 
-    public static void showExitScreen(User user) {
+    public static void showExitScreen(User user) {      
       if (user == null) {
         System.out.println("Error: User is null in showTelaCadastro");
-        return; // Or show an error dialog
+        return;
       }
-        TelaSaida tela = new TelaSaida(user);
-        tela.setVisible(true);
+      
+      TelaSaida tela = new TelaSaida(user);
+      tela.setVisible(true);
     }
 
     public static void showTelaCadastro(User usuario) {
@@ -230,6 +236,27 @@ public class Cofre{
         byte [] privatekey = db.getUserPrivateKey(email);
 
         return privatekey;
+    }
+
+
+    public static void addLogToDB(String message_id) {
+      LocalDate date = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+      LocalTime time = LocalTime.now(ZoneId.of("America/Sao_Paulo"));
+      String dateTime = date + " " + time;
+
+      System.out.println("Data e hora: " + dateTime + " - Mensagem: " + message_id);
+
+      db.addLog(dateTime, message_id);
+    }
+
+    public static void addLogToDB(String email, String message_id) {
+      LocalDate date = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+      LocalTime time = LocalTime.now(ZoneId.of("America/Sao_Paulo"));
+      String dateTime = date + " " + time;
+
+      System.out.println("Data e hora: " + dateTime + " - Mensagem: " + message_id + " - Email: " + email);
+
+      db.addLog(dateTime, email, message_id);
     }
 }
 

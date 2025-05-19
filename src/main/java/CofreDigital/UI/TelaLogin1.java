@@ -90,6 +90,7 @@ public class TelaLogin1 extends JFrame {
                 User user = Cofre.checaEmailValido(loginName);
                 if (user != null)
                 {
+                    Cofre.addLogToDB(user.getEmail(), "1001");
                     Cofre.authenticatePassword(user);
                     dispose();
                 }

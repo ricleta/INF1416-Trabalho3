@@ -304,8 +304,29 @@ public class DB {
         }
     }
 
+    private int getUID(String userEmail) {
+        String query = "SELECT UID FROM Usuarios WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, userEmail);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("UID");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getUID: " + e.getMessage());
+        }
+        return -1; // Return -1 if the user is not found
+    }
 
-    public void addLog(String dataHora, int uid, String mid) {
+    public void addLog(String dataHora, String userEmail, String mid) {
+        int uid = getUID(userEmail);
+        
+        if (uid == -1) {
+            System.out.println("User not found");
+            return;
+        }
+
         String queryInsertLog = "INSERT INTO Registros (dataHora, UID, MID) VALUES (?, ?, ?)";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(queryInsertLog)) {
@@ -317,6 +338,20 @@ public class DB {
             System.err.println("Error in addLog: " + e.getMessage());
         }
     }
+
+    public void addLog(String dataHora, String MID)
+    {
+        String queryInsertLog = "INSERT INTO Registros (dataHora, MID) VALUES (?, ?)";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(queryInsertLog)) {
+            pstmt.setString(1, dataHora);
+            pstmt.setString(2, MID);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error in addLog: " + e.getMessage());
+        }
+    }
+
 
     public String getMessage(String mid) {
         String query = "SELECT conteudo FROM Mensagens WHERE MID = ?";
