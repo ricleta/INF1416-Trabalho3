@@ -5,36 +5,45 @@
 
 package CofreDigital.Users;
 
-/*import com.eatthepath:otp-java;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-
-import java.io.File;
-import java.io.IOException;*/
-
 public class User {
     private String email;
+    private String nome;
+
+    private String hashSenhaPessoal;
     private String senhaPessoal;
+    
     private String fraseSecreta;
-    private int total_de_acessos;
+    
+    private int totalAcessos;
+    private int totalConsultas;
+    
+    private String base32TokenKey;
+    private byte[] encryptedtokenKey;
 
-    //from Google authenticator
-    private String token;
+    private String grupo;
 
-    public User(String email, String senhaPessoal, String token, String fraseSecreta) {
-        this.email = email;
+    public User(String email, String senhaPessoal, String hashSenhaPessoal, String base32TokenKey, String fraseSecreta, String grupo) {
+        setEmail(email);
+        setHashSenhaPessoal(hashSenhaPessoal);
         this.senhaPessoal = senhaPessoal;
-        this.fraseSecreta = fraseSecreta;
-        this.token = token;
+        setFraseSecreta(fraseSecreta);
+        setBase32TokenKey(base32TokenKey);
+        this.grupo = grupo;
     }
 
     public User(String email, String senhaPessoal, String fraseSecreta) {
-        this.email = email;
-        this.senhaPessoal = senhaPessoal;
-        this.fraseSecreta = fraseSecreta;
+        setEmail(email);
+        setHashSenhaPessoal(senhaPessoal);
+        setFraseSecreta(fraseSecreta);
+    }
+
+    public User(String email, String senhaPessoal, byte[] encryptedtokenKey, String grupo, int total_de_acessos, int totalConsultas) {
+        setEmail(email);
+        setHashSenhaPessoal(senhaPessoal);
+        this.encryptedtokenKey = encryptedtokenKey;
+        this.grupo = grupo;
+        setTotalAcessos(total_de_acessos);
+        setTotalConsultas(totalConsultas);
     }
 
     public String getEmail() {
@@ -43,22 +52,23 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+        setNome();
     }
 
-    public String getSenhaPessoal() {
-        return senhaPessoal;
+    public String getHashSenhaPessoal() {
+        return hashSenhaPessoal;
     }
 
-    public void setSenhaPessoal(String senhaPessoal) {
-        this.senhaPessoal = senhaPessoal;
+    public void setHashSenhaPessoal(String senhaPessoal) {
+        this.hashSenhaPessoal = senhaPessoal;
     }
 
-    public String getToken() {
-        return token;
+    public String getBase32TokenKey() {
+        return base32TokenKey;
     }
-
-    public void setToken(String token) {
-        this.token = token;
+    
+    public void setBase32TokenKey(String base32TokenKey) {
+        this.base32TokenKey = base32TokenKey;
     }
 
     public String getFraseSecreta() {
@@ -69,23 +79,46 @@ public class User {
         this.fraseSecreta = fraseSecreta;
     }
 
-    public int getTotal_de_acessos() {
-        return total_de_acessos;
+    public int getTotalAcessos() {
+        return totalAcessos;
     }
 
-    public void setTotal_de_acessos(int total_de_acessos) {
-        this.total_de_acessos = total_de_acessos;
+    public void setTotalAcessos(int total_de_acessos) {
+        this.totalAcessos = total_de_acessos;
     }
     
-    public boolean authlogin(){
-        return false;
+    public byte[] getEncryptedtokenKey() {
+        return encryptedtokenKey;
     }
 
-    public boolean authsenhaPessoal(){return false;}
+    public String getSenhaPessoal()
+    {
+        return senhaPessoal;
+    }
 
-    public boolean authtoken(){return false;}
+    public String getGrupo()
+    {
+        return grupo;
+    }
 
-    public boolean validaFraseSecreta() {return false;}
+    private void setNome()
+    {
+        // Extrai o nome do email (parte antes do '@')
+        this.nome = email.substring(0, email.indexOf('@'));
+    }
+
+    public String getNome()
+    {
+        return nome;
+    }
+
+    public int getTotalConsultas() {
+        return totalConsultas;
+    }
+    
+    public void setTotalConsultas(int totalConsultas) {
+        this.totalConsultas = totalConsultas;
+    }
 }
 
 

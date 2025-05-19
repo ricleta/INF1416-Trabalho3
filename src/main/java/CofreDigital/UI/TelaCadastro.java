@@ -1,11 +1,18 @@
+/*
+  Lívia Lutz dos Santos, 2211055
+  Ricardo Bastos Leta Vieira, 2110526
+*/
+
 package CofreDigital.UI;
 
 import CofreDigital.Cofre;
+import CofreDigital.Users.User;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class TelaCadastro extends JFrame {
     private String loginNameAtual;
@@ -14,12 +21,25 @@ public class TelaCadastro extends JFrame {
     private int total_de_usuarios;
     private String[] grupos;
 
+    private User usuario;
+
     public TelaCadastro(String loginNameAtual, String nomeGrupoAtual, String nomeUsuarioAtual, int total_de_usuarios, String[] grupos) {
         this.loginNameAtual = loginNameAtual;
         this.nomeGrupoAtual = nomeGrupoAtual;
         this.nomeUsuarioAtual = nomeUsuarioAtual;
         this.total_de_usuarios = total_de_usuarios;
         this.grupos = grupos;
+
+        configurarTela();
+    }
+
+    public TelaCadastro(User usuario, String[] grupos) {
+        this.loginNameAtual = usuario.getEmail();
+        this.nomeGrupoAtual = usuario.getGrupo();
+        this.nomeUsuarioAtual = usuario.getNome();
+        this.total_de_usuarios = usuario.getTotalAcessos();
+        this.grupos = grupos;
+        this.usuario = usuario;
 
         configurarTela();
     }
@@ -86,29 +106,64 @@ public class TelaCadastro extends JFrame {
         // Painel de Botões
         JPanel painelBotoesCadastro = new JPanel(new FlowLayout());
         JButton btnCadastrar = new JButton("Cadastrar");
+        btnCadastrar.setEnabled(false); // Initially disabled
         JButton btnVoltar = new JButton("Voltar");
+        if (usuario == null){
+            btnVoltar.setEnabled(false); // Disable the button if no user is provided (it's the first user)
+        }
 
-        btnCadastrar.addActionListener(e -> Cofre.cadastrarUsuario(
-            txtCertificado.getText(),
-            txtChavePrivada.getText(),
-            new String(txtFraseSecreta.getPassword()),
-            (String) comboGrupo.getSelectedItem(),
-            new String(txtSenha.getPassword()),
-            new String(txtConfirmacaoSenha.getPassword())
-        ));
+        // Add DocumentListener to password fields to enable/disable the button based on length
+        DocumentListener passwordLengthListener = createPasswordLengthListener(txtSenha, txtConfirmacaoSenha, btnCadastrar, 8);
+        txtSenha.getDocument().addDocumentListener(passwordLengthListener);
+        txtConfirmacaoSenha.getDocument().addDocumentListener(passwordLengthListener);
+        
+        btnCadastrar.addActionListener(e -> {
+                Cofre.confirmaCadastro(
+                    txtCertificado.getText(),
+                    txtChavePrivada.getText(),
+                    new String(txtFraseSecreta.getPassword()),
+                    (String) comboGrupo.getSelectedItem(),
+                    new String(txtSenha.getPassword()),
+                    new String(txtConfirmacaoSenha.getPassword())
+                );
 
+                dispose();
+            }
+        );
 
         btnVoltar.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Voltando ao menu principal...");
+            Cofre.showMenuPrincipal(usuario);
             dispose();
         });
 
         painelBotoesCadastro.add(btnCadastrar);
+        
         painelBotoesCadastro.add(btnVoltar);
 
         contentPane.add(painelBotoesCadastro);
 
         pack();
+    }
+
+    private static DocumentListener createPasswordLengthListener(JPasswordField passwordField,JPasswordField confirmPasswordField, JButton button, int minLength) {
+        return new DocumentListener() {
+            private void updateButtonState() {
+                button.setEnabled(passwordField.getPassword().length >= minLength);
+                button.setEnabled(confirmPasswordField.getPassword().length >= minLength);
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+        };
     }
 
 }

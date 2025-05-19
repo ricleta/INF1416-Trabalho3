@@ -5,6 +5,7 @@
 
 package CofreDigital.DB;
 
+import CofreDigital.SecurityEncryption.Base32;
 import CofreDigital.Users.User;
 
 import java.io.InputStream;
@@ -12,15 +13,21 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+
 import java.io.IOException;
+
+import java.security.SecureRandom;
 
 public class DB {
     private static final String DB_URL = "jdbc:sqlite:cofre.db";
     private static final String CSV_FILE_PATH = "/CofreDigital/DB/mensagens.csv";
-    private static final String [] GROUP_NAMES = {"admins", "usuarios"};
+    private static final String [] GROUP_NAMES = {"administrador", "usuario"};
     private static final String [] GROUP_IDS = {"1", "2"}; // IDs dos grupos, 1 para admins e 2 para usuarios
-
-
+    
     public DB() {
 
         try (Connection con = DriverManager.getConnection(DB_URL))
@@ -75,8 +82,11 @@ public class DB {
             "email TEXT NOT NULL, " +
             "senhaPessoal TEXT NOT NULL, " +
             "KID INTEGER NOT NULL, " +
-            "token TEXT NOT NULL, " +
-            "FOREIGN KEY (KID) REFERENCES Chaveiro(KID)" +
+            "tokenKey BLOB NOT NULL, " +
+            "grupo TEXT NOT NULL, " +
+            "total_acessos INT NOT NULL," +
+            "totalConsultas INT NOT NULL," + 
+            "FOREIGN KEY (KID) REFERENCES Chaveiro(KID) " +
             ");";
 
         try (Statement stmt = con.createStatement()) {
@@ -180,6 +190,23 @@ public class DB {
         return false;
     }
 
+    public boolean isAdminRegistered() {
+        try (Connection con = DriverManager.getConnection(DB_URL)) {
+            String query = "SELECT COUNT(*) FROM Usuarios WHERE email = 'admin@inf1416.puc-rio.br'";
+            try (Statement stmt = con.createStatement();
+                    ResultSet rs = stmt.executeQuery(query)) {
+                return rs.getInt(1) > 0;
+            } catch (SQLException e) {
+                System.err.println("Error: " + e.getMessage());
+            }
+        }
+        catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+
+        return false;
+    }
+
     private void fillMessagesTable(Connection con) {
         String queryInsertMessage = "INSERT INTO Mensagens (MID, conteudo) VALUES (?, ?)";
 
@@ -232,20 +259,78 @@ public class DB {
             return;
         }
 
-        // TODO: Remove this and have the token generated correctly
-        user.setToken("token");
+        //gerar token_key do TOTP e criptografar com chave AES-256 gera com SHA1-PRNG da senha pessoal
+        byte[] encryptedtokenKey = generateEncryptedTokenKey(user.getSenhaPessoal(), user.getBase32TokenKey());
 
-        String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, token) VALUES (?, ?, ?, ?)";
+        String queryInsertUser = "INSERT INTO Usuarios (email, senhaPessoal, KID, tokenKey, grupo, total_acessos, totalConsultas) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(queryInsertUser)) {
             pstmt.setString(1, user.getEmail());
-            pstmt.setString(2, user.getSenhaPessoal());
+            pstmt.setString(2, user.getHashSenhaPessoal());
             pstmt.setInt(3, kid);
-            pstmt.setString(4, user.getToken());
+            pstmt.setBytes(4, encryptedtokenKey);
+            pstmt.setString(5, user.getGrupo());
+            pstmt.setInt(6, 0);
+            pstmt.setInt(7, 0);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error in addUser: " + e.getMessage());
         }
+    }
+
+    public void updateAccessCount(User user) {
+        user.setTotalAcessos(user.getTotalAcessos() + 1);
+
+        String queryUpdateAccessCount = "UPDATE Usuarios SET total_acessos = total_acessos + 1 WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(queryUpdateAccessCount)) {
+            pstmt.setString(1, user.getEmail());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error in updateAccessCount: " + e.getMessage());
+        }
+    }
+
+    public void updateTotalConsultas(User user) {
+        user.setTotalConsultas(user.getTotalConsultas() + 1);
+
+        String queryUpdateAccessCount = "UPDATE Usuarios SET totalConsultas = totalConsultas + 1 WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(queryUpdateAccessCount)) {
+            pstmt.setString(1, user.getEmail());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error in updateTotalConsultas: " + e.getMessage());
+        }
+    }
+
+
+    public void addLog(String dataHora, int uid, String mid) {
+        String queryInsertLog = "INSERT INTO Registros (dataHora, UID, MID) VALUES (?, ?, ?)";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(queryInsertLog)) {
+            pstmt.setString(1, dataHora);
+            pstmt.setInt(2, uid);
+            pstmt.setString(3, mid);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error in addLog: " + e.getMessage());
+        }
+    }
+
+    public String getMessage(String mid) {
+        String query = "SELECT conteudo FROM Mensagens WHERE MID = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, mid);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("conteudo");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return null;
     }
 
     public int addKeyChain(byte[] chavePrivada, String certificadoDigital) {
@@ -273,16 +358,259 @@ public class DB {
     }
 
     public boolean userExists(User user) {
-        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ? AND senhaPessoal = ?";
+        String query = "SELECT COUNT(*) FROM Usuarios WHERE email = ?";
         try (Connection con = DriverManager.getConnection(DB_URL);
                 PreparedStatement pstmt = con.prepareStatement(query)) {
             pstmt.setString(1, user.getEmail());
-            pstmt.setString(2, user.getSenhaPessoal());
             ResultSet rs = pstmt.executeQuery();
             return rs.getInt(1) > 0;
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
         return false;
+    }
+
+    public User getUser(String email) {
+        String query = "SELECT * FROM Usuarios WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                // For debugging, access after rs.next()
+                byte[] tokenKeyBytes = rs.getBytes("tokenKey"); // Read bytes once
+                
+                return new User(rs.getString("email"), rs.getString("senhaPessoal"), tokenKeyBytes, rs.getString("grupo"), rs.getInt("total_acessos"), rs.getInt("totalConsultas"));
+            } else {
+                return null;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public String getUserPasswordHash(String email) {
+        String query = "SELECT senhaPessoal FROM Usuarios WHERE email = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("senhaPessoal");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        
+        return null; // Return null if the user is not found
+    }
+
+    public byte [] getUserPrivateKey(String email) {
+        String query = "SELECT chavePrivada FROM Chaveiro WHERE KID = (SELECT KID FROM Usuarios WHERE email = ?)";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBytes("chavePrivada");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        
+        return null; // Return null if the user is not found
+    }
+
+    public String generateTokenKey()
+    {
+        final int TOKEN_KEY_SIZE = 20; // 20 bytes for TOTP key
+
+        try {             
+            // Generate a random 20-byte key for TOTP
+            byte[] tokenKey = new byte[TOKEN_KEY_SIZE];
+            SecureRandom secureRandom = new SecureRandom();
+            secureRandom.nextBytes(tokenKey);
+                
+            // Codifica a tokenKey em base32
+            Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);    
+            String base32TokenKey = base32.toString(tokenKey);
+            System.out.println("Base32 Token Key: " + base32TokenKey);
+            
+            return base32TokenKey;
+        } catch (Exception e) {
+            System.err.println("Error generating token key: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private byte[] generateEncryptedTokenKey(String senhaPessoal, String base32TokenKey) {
+        final int AES_KEY_SIZE = 256;
+        final String CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";
+        final String AES_ALGORITHM = "AES";
+        final String PRNG_ALGORITHM = "SHA1PRNG";
+        
+        try {
+            Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);  
+            byte[] tokenKey = base32.fromString(base32TokenKey);
+
+            // Gera chave aes usando senha pessoal e SHA1-PRNG
+            SecureRandom secureRandom = SecureRandom.getInstance(PRNG_ALGORITHM);
+            secureRandom.setSeed(senhaPessoal.getBytes(StandardCharsets.UTF_8));
+    
+            KeyGenerator keyGen = KeyGenerator.getInstance(AES_ALGORITHM);
+            keyGen.init(AES_KEY_SIZE, secureRandom); // AES-256
+            SecretKey aesKey = keyGen.generateKey();
+
+            // Encripta a tokenKey usando AES/ECB/PKCS5Padding
+            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, aesKey);
+
+            byte[] encryptedTokenKey = cipher.doFinal(tokenKey);
+    
+            // Print the encrypted token key
+            System.out.println("Encrypted Token Key: " + base32.toString(encryptedTokenKey));
+
+            cipher.init(Cipher.DECRYPT_MODE, aesKey);
+            byte[] decryptedTokenKey = cipher.doFinal(encryptedTokenKey);
+            System.out.println("Decrypted Token Key: " + base32.toString(decryptedTokenKey));
+
+            return encryptedTokenKey;
+        } catch (Exception e) {
+            System.err.println("Error generating token key: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    public String decryptTokenKey(byte[] encryptedTokenKey, String senhaPessoal) {
+        final int AES_KEY_SIZE = 256;
+        final String CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";
+        final String AES_ALGORITHM = "AES";
+        final String PRNG_ALGORITHM = "SHA1PRNG";
+
+        try {
+            System.out.println("Senha pessoal: " + senhaPessoal);
+            // senhaPessoal = "12345678";
+            // Gera chave aes usando senha pessoal e SHA1-PRNG
+            SecureRandom secureRandom = SecureRandom.getInstance(PRNG_ALGORITHM);
+            secureRandom.setSeed(senhaPessoal.getBytes(StandardCharsets.UTF_8));
+
+            KeyGenerator keyGen = KeyGenerator.getInstance(AES_ALGORITHM);
+            keyGen.init(AES_KEY_SIZE, secureRandom); // AES-256
+            SecretKey aesKey = keyGen.generateKey();
+
+            // Decripta a tokenKey usando AES/ECB/PKCS5Padding
+            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, aesKey);
+            byte[] decryptedTokenKey = cipher.doFinal(encryptedTokenKey);
+
+            Base32 base32 = new Base32(Base32.Alphabet.BASE32, true, false);
+            System.out.println("Decrypted Token Key: " + base32.toString(decryptedTokenKey));
+            return base32.toString(decryptedTokenKey);
+        } catch (Exception e) {
+            System.err.println("Error decrypting token key: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public int getNumeroUsuariosCadastrados() {
+        String query = "SELECT COUNT(*) FROM Usuarios";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error counting users: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    public String[] getGrupos() {
+        String query = "SELECT nome FROM Grupos";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            String[] grupos = new String[GROUP_NAMES.length];
+            int i = 0;
+            while (rs.next()) {
+                grupos[i++] = rs.getString("nome");
+            }
+            return grupos;
+        } catch (SQLException e) {
+            System.err.println("Error getting groups: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public byte[] getAdminPrivateKey()
+    {
+        String query = "SELECT KID FROM Usuarios WHERE UID = 1";
+        int kid = -1;
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) {
+                kid = rs.getInt("KID");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin private key: " + e.getMessage());
+        }
+
+        if (kid == -1) {
+            System.out.println("Admin not found");
+            return null;
+        }
+
+        String query2 = "SELECT chavePrivada FROM Chaveiro WHERE KID = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query2)) {
+            pstmt.setInt(1, kid);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBytes("chavePrivada");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin private key: " + e.getMessage());
+        }
+
+        return null; // Return null if the user is not found
+    }
+
+    public String getAdminCert()
+    {
+        String query = "SELECT KID FROM Usuarios WHERE UID = 1";
+        int kid = -1;
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) {
+                kid = rs.getInt("KID");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin certificate: " + e.getMessage());
+        }
+
+        if (kid == -1) {
+            System.out.println("Admin not found");
+            return null;
+        }
+
+        String query2 = "SELECT certificadoDigital FROM Chaveiro WHERE KID = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query2)) {
+            pstmt.setInt(1, kid);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("certificadoDigital");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting admin certificate: " + e.getMessage());
+        }
+
+        return null; // Return null if the user is not found
     }
 }
