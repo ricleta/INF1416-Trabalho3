@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import java.util.Date;
 import java.util.List;
 
 public class TelaConsulta extends JFrame {
@@ -92,6 +92,8 @@ public class TelaConsulta extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Ação para listar arquivos secretos do usuario
+                Cofre.addLogToDB(loginNameAtual, "7003"); 
+
                 JOptionPane.showMessageDialog(TelaConsulta.this, "Listando arquivos secretos do usuario...");
     
                 String adminPassphrase = JOptionPane.showInputDialog(null, "Digite a frase secreta do admin:");
@@ -112,6 +114,9 @@ public class TelaConsulta extends JFrame {
                 btnAbrir.addActionListener(evt -> {
                     String selectedListValue = listaArquivos.getSelectedValue();
                     if (selectedListValue != null) {
+                            Date Data = new Date();
+                            String DataString = String.valueOf(Data);
+                            Cofre.addLogToDB(loginNameAtual, "7009"); 
                         // Extract the filename (arquivo[0]) from the JList item string.
                         // The list item format is "filename | extension | owner | group".
                         String selectedFileName = selectedListValue.split(" \\| ")[0].trim();
@@ -127,6 +132,8 @@ public class TelaConsulta extends JFrame {
 
                         if (foundIndex >= 0) {
                             String[] arquivoSelecionado = arquivos.get(foundIndex);
+
+                            Cofre.addLogToDB(loginNameAtual, "7010"); 
                             
                             // arquivoSelecionado[1] is the file extension.
                             String extensao = arquivoSelecionado[1]; 
@@ -161,6 +168,8 @@ public class TelaConsulta extends JFrame {
                 // Ação para voltar ao menu principal
                 JOptionPane.showMessageDialog(TelaConsulta.this, "Voltando ao menu principal...");
                 TelaConsulta.this.dispose(); // Fecha a tela atual
+
+                Cofre.addLogToDB(loginNameAtual, "7002"); 
                 Cofre.showMenuPrincipal(user);
             }
         });

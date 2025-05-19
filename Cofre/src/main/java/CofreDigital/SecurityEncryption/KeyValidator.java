@@ -150,6 +150,7 @@ public class KeyValidator {
         // Step 5: Verify the signature with the public key
         signature.initVerify(publicKey);
         signature.update(randomArray);
+
         return signature.verify(digitalSignature);
     }
 
@@ -173,6 +174,9 @@ public class KeyValidator {
     {
         byte [] dbPrivatekey = Cofre.getDBAdminPrivateKey();
         if (dbPrivatekey == null) {
+
+            Cofre.addLogToDB("admin@inf1416.puc-rio.br", "6005");
+
             System.out.println("!!!!!!!!!!!!!! Chave privada do admin não encontrada.");
             return null;
         }
@@ -328,7 +332,12 @@ public class KeyValidator {
         }
         catch(Exception e) {
             System.out.println("Falha ao decriptar o arquivo de índice: " + e.getMessage()); 
+            
+            Cofre.addLogToDB(login, "7007");
         }
+
+            
+            Cofre.addLogToDB(login, "7005");
         
         //chave publica do usuario administrador 
         PublicKey adminPublicKey = getAdminPublicKey();
@@ -342,12 +351,17 @@ public class KeyValidator {
 
             if (!isValid) {
                 System.out.println("Assinatura digital inválida.");
+            
+            Cofre.addLogToDB(login, "7008");
             }
         } 
         
         catch (Exception e) {
             System.out.println("Erro ao validar a assinatura digital: " + e.getMessage());
         }
+
+            
+            Cofre.addLogToDB(login, "7006");
 
 
         /*3. e listar o
@@ -405,13 +419,15 @@ public class KeyValidator {
     }
     
     public boolean abrirArquivoSecreto(String nomeSecreto, String donoArquivo, String login, String fraseSecretaUsuario, String ext) { 
-        // TODO
-        //verifica se o usuario é o dono do arquivo
-        // String donoArquivoDB = db.getUser(login).getEmail();
         if(!donoArquivo.equals(login)) {
             System.out.println("Usuario não tem permissão de acesso ao arquivo");
+            
+            Cofre.addLogToDB(login, "7012");
             return false;
         }
+
+        
+        Cofre.addLogToDB(login, "7011");
 
         //1. verificar a integridade e autenticidade do arquivo secreto;
 
@@ -422,6 +438,8 @@ public class KeyValidator {
         PrivateKey userPrivateKey = getUserPrivateKey(login, fraseSecretaUsuario);
 
         if (userPrivateKey == null) {
+            
+            Cofre.addLogToDB(login, "6006");
             System.out.println("123 ####### Falha ao carregar a chave privada do usuario.");
             return false;
         }
@@ -483,17 +501,24 @@ public class KeyValidator {
 
         catch(Exception e) {
             System.out.println("Falha ao decriptar o arquivo secreto: " + e.getMessage()); 
+            
+            Cofre.addLogToDB(login, "7015");
             return false;
         }
+
+            
+            Cofre.addLogToDB(login, "7014");
 
         
         //gravando o arquivo decriptado em um novo arquivo com o nome secreto
         String caminhoArquivoDecriptado = "Files\\" + ext;
         File fileDecriptado = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoDecriptado).toString());
-        try (java.io.FileWriter fw = new java.io.FileWriter(fileDecriptado, false)) {
-            String conteudo = new String(arquivoEncDecripted, "UTF-8");
-            fw.write(conteudo);
+        try (FileOutputStream fos = new FileOutputStream(fileDecriptado, false)) {
+            // String conteudo = new String(arquivoEncDecripted, "UTF-8");
+            fos.write(arquivoEncDecripted);
             System.out.println("Arquivo decriptado (texto) com sucesso: " + fileDecriptado.getAbsolutePath());
+            
+            Cofre.addLogToDB(login, "7013");
             return true;
         } 
         catch (IOException e) {

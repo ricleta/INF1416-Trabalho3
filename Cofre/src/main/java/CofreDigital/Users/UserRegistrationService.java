@@ -63,6 +63,8 @@ public class UserRegistrationService {
             certificateData.put("Email", certEmail);
 
         } catch (Exception e) {
+
+            Cofre.addLogToDB("email", "6004"); 
             System.out.println("Erro ao obter os dados do certificado: " + e.getMessage());
         }
         return certificateData;
@@ -101,6 +103,8 @@ public class UserRegistrationService {
             }
             catch (Exception e) {
                 System.out.println("Erro ao ler o certificado: " + e.getMessage());
+              
+                Cofre.addLogToDB(fraseSecreta + "@inf1416.puc-rio.br", "7004");
                 return;
             }
 
