@@ -92,6 +92,8 @@ public class TelaConsulta extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Ação para listar arquivos secretos do usuario
+                Cofre.addLogToDB(loginNameAtual, "7003"); 
+
                 JOptionPane.showMessageDialog(TelaConsulta.this, "Listando arquivos secretos do usuario...");
     
                 String adminPassphrase = JOptionPane.showInputDialog(null, "Digite a frase secreta do admin:");

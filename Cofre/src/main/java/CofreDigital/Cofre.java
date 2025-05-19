@@ -33,12 +33,10 @@ import CofreDigital.SecurityEncryption.KeyValidator;
 public class Cofre{
     private static DB db;
 
-    public static void main(String[] args) throws Exception {  
-        addLogToDB("1001"); // Sistema iniciado
-      
+    public static void main(String[] args) throws Exception {        
         db = new DB();
-        // TelaPrincipal tela = new TelaPrincipal("admin", "admins", "Admin", 1);
-        // tela.setVisible(true);
+        
+        addLogToDB("1001"); // Sistema iniciado
 
         if (db.isAdminRegistered()) {
             addLogToDB("1005"); // Partida do sistema iniciada para cadastro do administrador. 
