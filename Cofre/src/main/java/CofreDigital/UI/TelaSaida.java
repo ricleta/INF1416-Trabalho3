@@ -13,8 +13,6 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.BoxLayout;
-import CofreDigital.UI.TelaPrincipal;
-import java.awt.BorderLayout;
 
 public class TelaSaida extends JFrame {
     private String loginNameUsuario;
@@ -34,6 +32,7 @@ public class TelaSaida extends JFrame {
     }
 
     private void configuarTela() {
+        Cofre.addLogToDB(usuario.getEmail(), "8001"); 
         setTitle("Tela de Saida");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -62,6 +61,8 @@ public class TelaSaida extends JFrame {
 
         // Ações dos botões
         btnEncerrarSessao.addActionListener(e -> {
+            Cofre.addLogToDB(usuario.getEmail(), "8002"); 
+           
             // Lógica para encerrar a sessão
             System.out.println("Sessão encerrada.");
             
@@ -71,12 +72,15 @@ public class TelaSaida extends JFrame {
 
         btnEncerrarSistema.addActionListener(e -> {
             // Lógica para encerrar o sistema
+            Cofre.addLogToDB(usuario.getEmail(), "8003"); 
+            Cofre.addLogToDB(usuario.getEmail(), "1002"); 
             System.out.println("Sistema encerrado.");
             System.exit(0);
         });
 
         btnVoltarMenuPrincipal.addActionListener(e -> {
             // Lógica para voltar ao menu principal
+            Cofre.addLogToDB(usuario.getEmail(), "8004"); 
             Cofre.showMenuPrincipal(usuario);
             dispose();
         });

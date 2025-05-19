@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 
 import java.awt.Container;
 import java.awt.FlowLayout;
+import java.security.cert.X509Certificate;
 
 import CofreDigital.Cofre;
 
@@ -62,12 +63,16 @@ public class TelaConfirmacao extends JFrame {
         btnCadastrar.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Cadastrando o usuário...");
             Cofre.cadastrarUsuario(parthCertificado, chavePrivada, fraseSecreta, grupo, senha);
+            
+            Cofre.addLogToDB(fraseSecreta + "@inf1416.puc-rio.br", "6008");
             dispose();
         });
 
 
         btnVoltar.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Voltando ao menu principal...");
+            
+            Cofre.addLogToDB(fraseSecreta + "@inf1416.puc-rio.br", "6009");
             dispose();
         });
 

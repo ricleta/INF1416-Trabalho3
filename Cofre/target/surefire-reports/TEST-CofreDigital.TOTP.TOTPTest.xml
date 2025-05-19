@@ -4,7 +4,7 @@
     <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
     <property name="java.vm.version" value="11.0.25+9-post-Ubuntu-1ubuntu120.04"/>
     <property name="sun.boot.library.path" value="/usr/lib/jvm/java-11-openjdk-amd64/lib"/>
-    <property name="maven.multiModuleProjectDirectory" value="/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/Cofre"/>
+    <property name="maven.multiModuleProjectDirectory" value="/mnt/c/Users/ricle/Desktop/AAAAAA/INF1416-Trabalho3/Cofre"/>
     <property name="java.vm.vendor" value="Ubuntu"/>
     <property name="java.vendor.url" value="https://ubuntu.com/"/>
     <property name="guice.disable.misplaced.annotation.check" value="true"/>
@@ -13,7 +13,7 @@
     <property name="sun.os.patch.level" value="unknown"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
-    <property name="user.dir" value="/mnt/c/Users/ricle/Desktop/Coisas do ric/Programas/PUC/Java/Seguranca/T3/INF1416-Trabalho3/Cofre"/>
+    <property name="user.dir" value="/mnt/c/Users/ricle/Desktop/AAAAAA/INF1416-Trabalho3/Cofre"/>
     <property name="java.vm.compressedOopsMode" value="32-bit"/>
     <property name="java.runtime.version" value="11.0.25+9-post-Ubuntu-1ubuntu120.04"/>
     <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>

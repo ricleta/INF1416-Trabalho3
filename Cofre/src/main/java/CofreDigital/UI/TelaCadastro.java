@@ -127,12 +127,17 @@ public class TelaCadastro extends JFrame {
                     new String(txtConfirmacaoSenha.getPassword())
                 );
 
+                Cofre.addLogToDB(loginNameAtual, "6002"); 
+
                 dispose();
             }
         );
 
         btnVoltar.addActionListener(e -> {
+            Cofre.addLogToDB(loginNameAtual, "6010");
+
             Cofre.showMenuPrincipal(usuario);
+
             dispose();
         });
 
