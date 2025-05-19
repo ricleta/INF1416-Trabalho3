@@ -7,12 +7,14 @@ package CofreDigital.UI;
 
 import CofreDigital.Cofre;
 import CofreDigital.Users.User;
+import CofreDigital.DB.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
 
 import java.awt.*;
+import java.util.Date;
 
 public class TelaCadastro extends JFrame {
     private String loginNameAtual;
@@ -45,6 +47,7 @@ public class TelaCadastro extends JFrame {
     }
 
    private void configurarTela() {
+        DB db = new DB(); // Create an instance of DB
         setTitle("Menu Principal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // Centraliza a janela
@@ -127,12 +130,19 @@ public class TelaCadastro extends JFrame {
                     new String(txtConfirmacaoSenha.getPassword())
                 );
 
+                Date data = new Date();
+                String dataString = String.valueOf(data);
+                db.addLog(dataString, loginNameAtual, "6002"); 
+
                 dispose();
             }
         );
 
         btnVoltar.addActionListener(e -> {
             Cofre.showMenuPrincipal(usuario);
+            Date data = new Date();
+            String dataString = String.valueOf(data);
+            db.addLog(dataString, loginNameAtual, "6010"); 
             dispose();
         });
 

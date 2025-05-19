@@ -22,6 +22,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Date;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -150,6 +151,13 @@ public class KeyValidator {
         // Step 5: Verify the signature with the public key
         signature.initVerify(publicKey);
         signature.update(randomArray);
+
+        if(!signature.verify(digitalSignature)) {
+
+            Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, getLoginFromCertificate((X509Certificate) certificate), "6007");
+        } 
         return signature.verify(digitalSignature);
     }
 
@@ -173,6 +181,9 @@ public class KeyValidator {
     {
         byte [] dbPrivatekey = Cofre.getDBAdminPrivateKey();
         if (dbPrivatekey == null) {
+            Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, "email", "6005");
             System.out.println("!!!!!!!!!!!!!! Chave privada do admin não encontrada.");
             return null;
         }
@@ -328,7 +339,14 @@ public class KeyValidator {
         }
         catch(Exception e) {
             System.out.println("Falha ao decriptar o arquivo de índice: " + e.getMessage()); 
+            Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            Cofre.addLog(DataString, login, "7007");
         }
+
+        Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            Cofre.addLog(DataString, login, "7005");
         
         //chave publica do usuario administrador 
         PublicKey adminPublicKey = getAdminPublicKey();
@@ -342,12 +360,19 @@ public class KeyValidator {
 
             if (!isValid) {
                 System.out.println("Assinatura digital inválida.");
+                Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, login, "7008");
             }
         } 
         
         catch (Exception e) {
             System.out.println("Erro ao validar a assinatura digital: " + e.getMessage());
         }
+
+        Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, login, "7006");
 
 
         /*3. e listar o
@@ -407,8 +432,15 @@ public class KeyValidator {
     public boolean abrirArquivoSecreto(String nomeSecreto, String donoArquivo, String login, String fraseSecretaUsuario, String ext) { 
         if(!donoArquivo.equals(login)) {
             System.out.println("Usuario não tem permissão de acesso ao arquivo");
+            Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, login, "7012");
             return false;
         }
+
+        Date data = new Date();
+        String dataString = String.valueOf(data);
+        Cofre.addLog(dataString, login, "7011");
 
         //1. verificar a integridade e autenticidade do arquivo secreto;
 
@@ -419,6 +451,9 @@ public class KeyValidator {
         PrivateKey userPrivateKey = getUserPrivateKey(login, fraseSecretaUsuario);
 
         if (userPrivateKey == null) {
+            Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, login, "6006");
             System.out.println("123 ####### Falha ao carregar a chave privada do usuario.");
             return false;
         }
@@ -480,8 +515,15 @@ public class KeyValidator {
 
         catch(Exception e) {
             System.out.println("Falha ao decriptar o arquivo secreto: " + e.getMessage()); 
+            Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            Cofre.addLog(DataString, login, "7015");
             return false;
         }
+
+         Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            Cofre.addLog(DataString, login, "7014");
 
         
         //gravando o arquivo decriptado em um novo arquivo com o nome secreto
@@ -491,6 +533,9 @@ public class KeyValidator {
             // String conteudo = new String(arquivoEncDecripted, "UTF-8");
             fos.write(arquivoEncDecripted);
             System.out.println("Arquivo decriptado (texto) com sucesso: " + fileDecriptado.getAbsolutePath());
+            Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            Cofre.addLog(DataString, login, "7013");
             return true;
         } 
         catch (IOException e) {

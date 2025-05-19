@@ -5,6 +5,7 @@
 
 package CofreDigital.UI;
 
+import java.util.Date;
 import java.util.Map;
 
 import javax.swing.BoxLayout;
@@ -16,6 +17,7 @@ import javax.swing.JPanel;
 
 import java.awt.Container;
 import java.awt.FlowLayout;
+import java.security.cert.X509Certificate;
 
 import CofreDigital.Cofre;
 
@@ -62,12 +64,18 @@ public class TelaConfirmacao extends JFrame {
         btnCadastrar.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Cadastrando o usuário...");
             Cofre.cadastrarUsuario(parthCertificado, chavePrivada, fraseSecreta, grupo, senha);
+            Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, fraseSecreta + "@inf1416.puc-rio.br", "6008");
             dispose();
         });
 
 
         btnVoltar.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Voltando ao menu principal...");
+            Date data = new Date();
+            String dataString = String.valueOf(data);
+            Cofre.addLog(dataString, fraseSecreta + "@inf1416.puc-rio.br", "6009");
             dispose();
         });
 

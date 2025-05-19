@@ -19,6 +19,7 @@ import javax.crypto.SecretKey;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +64,9 @@ public class UserRegistrationService {
             certificateData.put("Email", certEmail);
 
         } catch (Exception e) {
+            Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            db.addLog(DataString, "email", "6004"); 
             System.out.println("Erro ao obter os dados do certificado: " + e.getMessage());
         }
         return certificateData;
@@ -101,6 +105,9 @@ public class UserRegistrationService {
             }
             catch (Exception e) {
                 System.out.println("Erro ao ler o certificado: " + e.getMessage());
+                Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            Cofre.addLog(DataString, fraseSecreta + "@inf1416.puc-rio.br", "7004");
                 return;
             }
 

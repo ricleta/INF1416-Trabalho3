@@ -7,6 +7,7 @@ package CofreDigital.UI;
 
 import CofreDigital.Users.User;
 import CofreDigital.Cofre;
+import CofreDigital.DB.DB;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -15,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.BoxLayout;
 import CofreDigital.UI.TelaPrincipal;
 import java.awt.BorderLayout;
+import java.util.Date;
 
 public class TelaSaida extends JFrame {
     private String loginNameUsuario;
@@ -34,6 +36,10 @@ public class TelaSaida extends JFrame {
     }
 
     private void configuarTela() {
+        DB db = new DB();
+        Date data = new Date();
+        String dataString = String.valueOf(data);
+        db.addLog(dataString,usuario.getEmail(), "8001"); 
         setTitle("Tela de Saida");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -62,6 +68,9 @@ public class TelaSaida extends JFrame {
 
         // Ações dos botões
         btnEncerrarSessao.addActionListener(e -> {
+            Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            db.addLog(DataString, usuario.getEmail(), "8002"); 
             // Lógica para encerrar a sessão
             System.out.println("Sessão encerrada.");
             
@@ -71,12 +80,19 @@ public class TelaSaida extends JFrame {
 
         btnEncerrarSistema.addActionListener(e -> {
             // Lógica para encerrar o sistema
+            Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            db.addLog(DataString, usuario.getEmail(), "8003"); 
+            db.addLog(dataString, usuario.getEmail(), "1002"); 
             System.out.println("Sistema encerrado.");
             System.exit(0);
         });
 
         btnVoltarMenuPrincipal.addActionListener(e -> {
             // Lógica para voltar ao menu principal
+            Date Data = new Date();
+            String DataString = String.valueOf(Data);
+            db.addLog(DataString, usuario.getEmail(), "8004"); 
             Cofre.showMenuPrincipal(usuario);
             dispose();
         });
