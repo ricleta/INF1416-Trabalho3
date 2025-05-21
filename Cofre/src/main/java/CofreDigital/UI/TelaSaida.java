@@ -75,7 +75,9 @@ public class TelaSaida extends JFrame {
             Cofre.addLogToDB(usuario.getEmail(), "8003"); 
             Cofre.addLogToDB(usuario.getEmail(), "1002"); 
             System.out.println("Sistema encerrado.");
-            System.exit(0);
+            
+            Cofre.encerrarSistema();
+            dispose();
         });
 
         btnVoltarMenuPrincipal.addActionListener(e -> {

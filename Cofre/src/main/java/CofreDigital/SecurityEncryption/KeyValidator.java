@@ -43,9 +43,9 @@ public class KeyValidator {
     private final String AES_ALGORITHM = "AES";
     private final String KEY_ALGORITHM = "RSA";
     private final String PRNG_ALGORITHM = "SHA1PRNG";
-    private final String INDEX_ENV_PATH = "Files\\index.env";
-    private final String INDEX_ASD_PATH = "Files\\index.asd";
-    private final String INDEX_ENC_PATH = "Files\\index.enc";
+    // private final String INDEX_ENV_PATH = "Files\\index.env";
+    // private final String INDEX_ASD_PATH = "Files\\index.asd";
+    // private final String INDEX_ENC_PATH = "Files\\index.enc";
 
     public KeyValidator() {
         Security.addProvider(new BouncyCastleProvider());
@@ -269,7 +269,11 @@ public class KeyValidator {
         return null;
     }
 
-    public List<String[]> listFiles(String login, String fraseSecretaUsuarioAtual, String fraseSecretaAdmin) {        
+    public List<String[]> listFiles(String login, String fraseSecretaUsuarioAtual, String fraseSecretaAdmin, String folder_path) {        
+        final String INDEX_ENV_PATH = Paths.get(folder_path + "/index.env").toString();
+        final String INDEX_ASD_PATH = Paths.get(folder_path + "/index.asd").toString();
+        final String INDEX_ENC_PATH = Paths.get(folder_path + "/index.enc").toString();
+        
         PrivateKey adminPrivateKey = getAdminPrivateKey(fraseSecretaAdmin);
 
         if (adminPrivateKey == null) {
@@ -278,7 +282,7 @@ public class KeyValidator {
         }
         System.out.println("Chave privada do admin: " + adminPrivateKey.toString());
 
-        File fileEnv = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(INDEX_ENV_PATH).toString());
+        File fileEnv = new File("./".replace("/", System.getProperty("file.separator")) + INDEX_ENV_PATH);
         byte[] semente = null;
         SecretKey aesKey = null;
         try (FileInputStream fis = new FileInputStream(fileEnv)) {
@@ -305,12 +309,39 @@ public class KeyValidator {
 
         /*a assinatura digital do arquivo de índice é armazenada no arquivo index.asd
         (representação binária da assinatura digital) */
-        File fileAsd = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(INDEX_ASD_PATH).toString());
+        File fileAsd = new File("./".replace("/", System.getProperty("file.separator")) + INDEX_ASD_PATH);
         byte[] signatureBytes = null;
+
+        String certificatePEM = Cofre.getDBUserCert(login);
+        Certificate certificate = null;
+        try {
+            CertificateFactory certFactory = CertificateFactory.getInstance(CERTIFICATE_TYPE);
+            certificate = certFactory.generateCertificate(new ByteArrayInputStream(certificatePEM.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            System.out.println("Falha ao carregar o certificado do usuário: " + e.getMessage());
+            // Handle error appropriately, maybe return null or throw an exception
+        }
 
         try (FileInputStream fis = new FileInputStream(fileAsd)) {
             signatureBytes = new byte[(int) fileAsd.length()];
             fis.read(signatureBytes);
+
+            boolean isValid = false;
+            try{
+                // Verifica se a assinatura digital é válida
+                Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+                signature.initVerify(certificate);
+                signature.update(signatureBytes);
+                isValid = signature.verify(signatureBytes);
+            }
+            catch (Exception e) {
+                System.out.println("Falha ao verificar a assinatura digital: " + e.getMessage());
+            }
+
+            if (!isValid) {
+                System.out.println("Assinatura digital inválida.");
+                return null;
+            }
         } 
         catch (IOException e) {
             System.out.println("Falha ao ler o arquivo de assinatura digital: " + e.getMessage()); 
@@ -319,7 +350,7 @@ public class KeyValidator {
         /*deve-se
         decriptar o arquivo de índice da pasta fornecida (cifra AES, modo ECB e enchimento PKCS5),
         chamado index.enc */
-        File file = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(INDEX_ENC_PATH).toString());
+        File file = new File("./".replace("/", System.getProperty("file.separator")) + INDEX_ENC_PATH);
         byte[] indexencDecripted = null;
 
         try (FileInputStream fis = new FileInputStream(file)) {
@@ -418,7 +449,7 @@ public class KeyValidator {
 
     }
     
-    public boolean abrirArquivoSecreto(String nomeSecreto, String donoArquivo, String login, String fraseSecretaUsuario, String ext) { 
+    public boolean abrirArquivoSecreto(String nomeSecreto, String donoArquivo, String login, String fraseSecretaUsuario, String ext, String folder_path) { 
         if(!donoArquivo.equals(login)) {
             System.out.println("Usuario não tem permissão de acesso ao arquivo");
             
@@ -444,7 +475,7 @@ public class KeyValidator {
             return false;
         }
 
-        String caminhoArquivoEnv = "Files\\" + nomeSecreto + ".env";
+        String caminhoArquivoEnv = folder_path + nomeSecreto + ".env";
         File fileEnv = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoEnv).toString());
         byte[] semente = null;
         SecretKey aesKey = null;
@@ -472,21 +503,44 @@ public class KeyValidator {
 
         /*a assinatura digital do arquivo secreto é armazenada no arquivo <NOME_CODIGO_DO_ARQUIVO>.asd
         (representação binária da assinatura digital) */
-        String caminhoArquivoAsd = "Files\\" + nomeSecreto + ".asd";
+        String caminhoArquivoAsd = folder_path + nomeSecreto + ".asd";
         File fileAsd = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoAsd).toString());
         byte[] signatureBytes = null;
+
+        String certificatePEM = Cofre.getDBUserCert(login);
+        Certificate certificate = null;
+        try {
+            CertificateFactory certFactory = CertificateFactory.getInstance(CERTIFICATE_TYPE);
+            certificate = certFactory.generateCertificate(new ByteArrayInputStream(certificatePEM.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            System.out.println("Falha ao carregar o certificado do usuário: " + e.getMessage());
+            // Handle error appropriately, maybe return null or throw an exception
+        }
+
+        boolean isValid = false;
+        
         try (FileInputStream fis = new FileInputStream(fileAsd)) {
             signatureBytes = new byte[(int) fileAsd.length()];
             fis.read(signatureBytes);
+            
+            // Verifica se a assinatura digital é válida
+            Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+            signature.initVerify(certificate);
+            signature.update(signatureBytes);
+
+            isValid = signature.verify(signatureBytes);
+            
+            if (!isValid) {
+                System.out.println("Assinatura digital inválida.");
+            }
         } 
-        
-        catch (IOException e) {
+        catch (Exception e) {
             System.out.println("Falha ao ler o arquivo de assinatura digital: " + e.getMessage());
             return false; 
         }
 
         //decriptar o arquivo secreto
-        String caminhoArquivo = "Files\\" + nomeSecreto + ".enc";
+        String caminhoArquivo = folder_path + nomeSecreto + ".enc";
         File file = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivo).toString());
         byte[] arquivoEncDecripted = null;
         try (FileInputStream fis = new FileInputStream(file)) {
@@ -511,7 +565,7 @@ public class KeyValidator {
 
         
         //gravando o arquivo decriptado em um novo arquivo com o nome secreto
-        String caminhoArquivoDecriptado = "Files\\" + ext;
+        String caminhoArquivoDecriptado = folder_path + ext;
         File fileDecriptado = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoDecriptado).toString());
         try (FileOutputStream fos = new FileOutputStream(fileDecriptado, false)) {
             // String conteudo = new String(arquivoEncDecripted, "UTF-8");

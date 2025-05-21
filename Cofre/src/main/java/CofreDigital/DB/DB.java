@@ -648,4 +648,41 @@ public class DB {
 
         return null; // Return null if the user is not found
     }
+
+
+    public String getUserCert(String email)
+    {
+        String query = "SELECT KID FROM Usuarios WHERE email = ?";
+        int kid = -1;
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                kid = rs.getInt("KID");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting user certificate: " + e.getMessage());
+        }
+
+        if (kid == -1) {
+            System.out.println("User not found");
+            return null;
+        }
+
+        String query2 = "SELECT certificadoDigital FROM Chaveiro WHERE KID = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query2)) {
+            pstmt.setInt(1, kid);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("certificadoDigital");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting user certificate: " + e.getMessage());
+        }
+
+        return null; // Return null if the user is not found
+    }
 }

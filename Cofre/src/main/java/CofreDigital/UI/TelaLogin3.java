@@ -18,12 +18,15 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.BorderFactory;
+import javax.swing.JOptionPane;
 
 /*
  * CofreDigital - Tela de Login para autenticacao do TOTP do usuario
  */
 public class TelaLogin3 extends JFrame{
     private static final int TOTPCodeSize = 6;
+    private int tentativas = 0;
+    
     public TelaLogin3(User user) {
         setTitle("Tela de Login");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -61,6 +64,16 @@ public class TelaLogin3 extends JFrame{
                 {
                     Cofre.showMenuPrincipal(user);
                     dispose(); // Fecha a tela de login
+                }
+                else {
+                    tentativas++;
+                    if (tentativas >= 3) {
+                        JOptionPane.showMessageDialog(this, "Número máximo de tentativas atingido.");
+                        Cofre.blockUser(user.getEmail());
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Código TOTP inválido. Tentativa " + tentativas + " de 3.");
+                        txtTOTPField.setText(""); // Limpa o campo de entrada
+                    }
                 }
             } else {
                 System.out.println("O código TOTP deve ter " + TOTPCodeSize + " dígitos.");

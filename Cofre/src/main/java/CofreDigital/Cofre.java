@@ -23,13 +23,18 @@ import CofreDigital.SecurityEncryption.Base32;
 import CofreDigital.SecurityEncryption.KeyValidator;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 
+import javax.swing.JOptionPane;
 
 public class Cofre{
     private static DB db;
+    private static String adminPassphrase;
+    private static String folder_path;
+    private static Map<String, LocalDateTime> blockedUsersDates = new HashMap<>();
 
     public static void main(String[] args) throws Exception {        
         db = new DB();
@@ -38,7 +43,8 @@ public class Cofre{
 
         if (db.isAdminRegistered()) {
             // System.out.println("Admin já cadastrado.");
-            addLogToDB("admin@inf1416.puc-rio.br", "1006");
+
+            addLogToDB("1006");
             showLoginScreen();
         } 
         
@@ -58,6 +64,36 @@ public class Cofre{
         // TelaLogin2 tela = new TelaLogin2("admin@inf1416.puc-rio.br");
         // tela.setVisible(true);
     }
+
+    public static void blockUser(String email) {
+        java.time.LocalDateTime today = java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        blockedUsersDates.put(email, today);
+
+        showLoginScreen();
+    }
+    
+    public static void unblockUser(String email) {
+        blockedUsersDates.remove(email);
+    }
+
+    public static boolean isUserBlocked(String email) {
+        if (blockedUsersDates.containsKey(email))
+        {
+            java.time.LocalDateTime blockedDateTime = blockedUsersDates.get(email);
+            java.time.LocalDateTime currentDateTime = java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+            long minutesBlocked = java.time.temporal.ChronoUnit.MINUTES.between(blockedDateTime, currentDateTime);
+            
+            if (minutesBlocked >= 2) {
+              unblockUser(email);
+              return false; // Usuário desbloqueado após 2 minutos
+            }
+            else {
+              return true; // Usuário ainda bloqueado
+            }
+        }
+    
+        return false; // Usuário não bloqueado
+    } 
 
     public static void confirmaCadastro(String pathCertificado, String chavePrivada, String fraseSecreta, String grupo, String senha, String confirmacaoSenha) {
         if (!senha.equals(confirmacaoSenha)) {
@@ -100,6 +136,7 @@ public class Cofre{
           
           addLogToDB(email , "2005");
         }
+
         return db.getUser(email);
     }
 
@@ -173,6 +210,12 @@ public class Cofre{
     }
 
     public static void showLoginScreen() {
+        javax.swing.JPasswordField pwd = new javax.swing.JPasswordField();
+        int action = JOptionPane.showConfirmDialog(null, pwd, "Digite a frase secreta do admin:", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (action == JOptionPane.OK_OPTION) {
+          adminPassphrase = new String(pwd.getPassword());
+        } 
+
         TelaLogin1 tela = new TelaLogin1();
         tela.setVisible(true);
     }
@@ -239,11 +282,12 @@ public class Cofre{
         return db.getGrupos();
     }
 
-    public static List<String[]> listFiles(User usuario, String adminPassphrase) {
+    public static List<String[]> listFiles(User usuario, String folder_path) {
         db.updateTotalConsultas(usuario);
         KeyValidator keyValidator = new KeyValidator();
+        Cofre.folder_path = folder_path;
 
-        List<String[]> files = keyValidator.listFiles(usuario.getEmail(), usuario.getFraseSecreta(), adminPassphrase);
+        List<String[]> files = keyValidator.listFiles(usuario.getEmail(), usuario.getFraseSecreta(), adminPassphrase, folder_path);
         return files;
     }
 
@@ -257,9 +301,14 @@ public class Cofre{
       return db.getAdminCert();
     }
 
+    public static String getDBUserCert(String email)
+    {
+      return db.getUserCert(email);
+    }
+    
     public static void abrirArquivoSecreto(String nomeArquivo, String fileOwner, String loginNameAtual, String fraseSecretaUsuario, String extensao) {
         KeyValidator keyValidator = new KeyValidator();
-        keyValidator.abrirArquivoSecreto(nomeArquivo, fileOwner, loginNameAtual, fraseSecretaUsuario, extensao);
+        keyValidator.abrirArquivoSecreto(nomeArquivo, fileOwner, loginNameAtual, fraseSecretaUsuario, extensao, Cofre.folder_path);
     }
 
     public static byte [] getUserPrivateKey(String email) {
@@ -286,5 +335,11 @@ public class Cofre{
       System.out.println("Data e hora: " + dateTime + " - Mensagem: " + message_id + " - Email: " + email);
 
       db.addLog(dateTime, email, message_id);
+    }
+
+    public static void encerrarSistema() {
+        adminPassphrase = "";
+        folder_path = "";
+        System.exit(0);
     }
 }

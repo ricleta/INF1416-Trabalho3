@@ -95,10 +95,8 @@ public class TelaConsulta extends JFrame {
                 Cofre.addLogToDB(loginNameAtual, "7003"); 
 
                 JOptionPane.showMessageDialog(TelaConsulta.this, "Listando arquivos secretos do usuario...");
-    
-                String adminPassphrase = JOptionPane.showInputDialog(null, "Digite a frase secreta do admin:");
 
-                arquivos = Cofre.listFiles(user, adminPassphrase);
+                arquivos = Cofre.listFiles(user, textFolderPath.getText());
 
                 //montar a tabela com os arquivos para seleção
                 DefaultListModel<String> model = new DefaultListModel<>();

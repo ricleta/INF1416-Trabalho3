@@ -146,7 +146,10 @@ public class TelaLogin2 extends JFrame {
                 JOptionPane.showMessageDialog(TelaLogin2.this, "Senha incorreta. Tentativa " + tentativas + " de 3.");
                 
                 if (tentativas >= 3) {
+                    Cofre.blockUser(currentUserEmail);
                     tentativas = 0;
+                    JOptionPane.showMessageDialog(TelaLogin2.this, "Usuario bloqueado. Entre em contato com o administrador.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    dispose();
                 }
             }
             passwordField.setText("");
