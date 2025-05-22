@@ -22,6 +22,8 @@ public class TelaConsulta extends JFrame {
     private int total_de_consultas_usuario;
     private List<String[]> arquivos;
     private User user;
+    JScrollPane scrollPane;
+    JButton btnAbrir;
 
     public TelaConsulta(User user) {
         this.loginNameAtual = user.getEmail();
@@ -95,10 +97,8 @@ public class TelaConsulta extends JFrame {
                 Cofre.addLogToDB(loginNameAtual, "7003"); 
 
                 JOptionPane.showMessageDialog(TelaConsulta.this, "Listando arquivos secretos do usuario...");
-    
-                String adminPassphrase = JOptionPane.showInputDialog(null, "Digite a frase secreta do admin:");
 
-                arquivos = Cofre.listFiles(user, adminPassphrase);
+                arquivos = Cofre.listFiles(user, textFolderPath.getText());
 
                 //montar a tabela com os arquivos para seleção
                 DefaultListModel<String> model = new DefaultListModel<>();
@@ -109,7 +109,13 @@ public class TelaConsulta extends JFrame {
                 }
 
                 JList<String> listaArquivos = new JList<>(model);
-                JButton btnAbrir = new JButton("Abrir");
+                
+                if (btnAbrir != null) {
+                    remove(btnAbrir);
+                }
+                else {
+                    btnAbrir = new JButton("Abrir");
+                }
 
                 btnAbrir.addActionListener(evt -> {
                     String selectedListValue = listaArquivos.getSelectedValue();
@@ -155,7 +161,14 @@ public class TelaConsulta extends JFrame {
                     }
                 });
 
-                add(new JScrollPane(listaArquivos), "Center");
+                if (scrollPane != null) {
+                    remove(scrollPane);
+                }
+                else {
+                    scrollPane = new JScrollPane(listaArquivos);
+                }
+
+                add(scrollPane, "Center");
                 add(btnAbrir, "South");
 
                 pack();

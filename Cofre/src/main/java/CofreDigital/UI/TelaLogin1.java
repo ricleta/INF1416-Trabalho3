@@ -90,6 +90,12 @@ public class TelaLogin1 extends JFrame {
                 User user = Cofre.checaEmailValido(loginName);
                 if (user != null)
                 {
+                    if (Cofre.isUserBlocked(loginName))
+                    {
+                        JOptionPane.showMessageDialog(null, "Usuario bloqueado.", "Erro", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
                     Cofre.authenticatePassword(user);
                     dispose();
                 }

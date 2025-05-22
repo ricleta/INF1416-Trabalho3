@@ -8,6 +8,10 @@ package CofreDigital.DB;
 import CofreDigital.SecurityEncryption.Base32;
 import CofreDigital.Users.User;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -86,6 +90,7 @@ public class DB {
             "grupo TEXT NOT NULL, " +
             "total_acessos INT NOT NULL," +
             "totalConsultas INT NOT NULL," + 
+            "lastBlockedDateTime TEXT," +
             "FOREIGN KEY (KID) REFERENCES Chaveiro(KID) " +
             ");";
 
@@ -159,6 +164,39 @@ public class DB {
         }
     }
 
+    public Map<String, LocalDateTime> getBlockedUsers() {
+        Map<String, LocalDateTime> blockedUsers = new HashMap<>();
+        String query = "SELECT email, lastBlockedDateTime FROM Usuarios WHERE lastBlockedDateTime IS NOT NULL";
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                String email = rs.getString("email");
+                LocalDateTime lastBlockedDateTime = LocalDateTime.parse(rs.getString("lastBlockedDateTime"));
+                blockedUsers.put(email, lastBlockedDateTime);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+
+        return blockedUsers;
+    }
+
+    public void updateBlockedUsers(Map<String, LocalDateTime> blockedUsers) {
+        String query = "UPDATE Usuarios SET lastBlockedDateTime = ? WHERE email = ?";
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            for (Map.Entry<String, LocalDateTime> entry : blockedUsers.entrySet()) {
+                pstmt.setString(1, entry.getValue().toString());
+                pstmt.setString(2, entry.getKey());
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
 
     private boolean isMessagesTableEmpty(Connection con) {
         String query = "SELECT EXISTS (SELECT 1 FROM Mensagens LIMIT 1)";
@@ -644,6 +682,43 @@ public class DB {
             }
         } catch (SQLException e) {
             System.err.println("Error getting admin certificate: " + e.getMessage());
+        }
+
+        return null; // Return null if the user is not found
+    }
+
+
+    public String getUserCert(String email)
+    {
+        String query = "SELECT KID FROM Usuarios WHERE email = ?";
+        int kid = -1;
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                kid = rs.getInt("KID");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting user certificate: " + e.getMessage());
+        }
+
+        if (kid == -1) {
+            System.out.println("User not found");
+            return null;
+        }
+
+        String query2 = "SELECT certificadoDigital FROM Chaveiro WHERE KID = ?";
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query2)) {
+            pstmt.setInt(1, kid);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("certificadoDigital");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting user certificate: " + e.getMessage());
         }
 
         return null; // Return null if the user is not found

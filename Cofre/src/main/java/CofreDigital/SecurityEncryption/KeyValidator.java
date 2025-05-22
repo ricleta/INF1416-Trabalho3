@@ -43,9 +43,9 @@ public class KeyValidator {
     private final String AES_ALGORITHM = "AES";
     private final String KEY_ALGORITHM = "RSA";
     private final String PRNG_ALGORITHM = "SHA1PRNG";
-    private final String INDEX_ENV_PATH = "Files\\index.env";
-    private final String INDEX_ASD_PATH = "Files\\index.asd";
-    private final String INDEX_ENC_PATH = "Files\\index.enc";
+    // private final String INDEX_ENV_PATH = "Files\\index.env";
+    // private final String INDEX_ASD_PATH = "Files\\index.asd";
+    // private final String INDEX_ENC_PATH = "Files\\index.enc";
 
     public KeyValidator() {
         Security.addProvider(new BouncyCastleProvider());
@@ -253,6 +253,22 @@ public class KeyValidator {
         return null;
     }
 
+    private PublicKey getUserPublicKey(String login)
+    {
+        String certificatePEM = Cofre.getUserCert(login);
+
+        try {
+            CertificateFactory certFactory = CertificateFactory.getInstance(CERTIFICATE_TYPE);
+            Certificate certificate = certFactory.generateCertificate(new ByteArrayInputStream(certificatePEM.getBytes(StandardCharsets.UTF_8)));
+            return certificate.getPublicKey();
+        } 
+        catch (Exception e) {
+            System.out.println("Falha ao carregar o certificado: " + e.getMessage());
+        }
+
+        return null;
+    }
+
     private PublicKey getAdminPublicKey()
     {
         String certificatePEM = Cofre.getDBAdminCert();
@@ -269,7 +285,11 @@ public class KeyValidator {
         return null;
     }
 
-    public List<String[]> listFiles(String login, String fraseSecretaUsuarioAtual, String fraseSecretaAdmin) {        
+    public List<String[]> listFiles(String login, String fraseSecretaUsuarioAtual, String fraseSecretaAdmin, String folder_path) {        
+        final String INDEX_ENV_PATH = Paths.get(folder_path + "/index.env").toString();
+        final String INDEX_ASD_PATH = Paths.get(folder_path + "/index.asd").toString();
+        final String INDEX_ENC_PATH = Paths.get(folder_path + "/index.enc").toString();
+        
         PrivateKey adminPrivateKey = getAdminPrivateKey(fraseSecretaAdmin);
 
         if (adminPrivateKey == null) {
@@ -278,7 +298,7 @@ public class KeyValidator {
         }
         System.out.println("Chave privada do admin: " + adminPrivateKey.toString());
 
-        File fileEnv = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(INDEX_ENV_PATH).toString());
+        File fileEnv = new File("./".replace("/", System.getProperty("file.separator")) + INDEX_ENV_PATH);
         byte[] semente = null;
         SecretKey aesKey = null;
         try (FileInputStream fis = new FileInputStream(fileEnv)) {
@@ -305,7 +325,7 @@ public class KeyValidator {
 
         /*a assinatura digital do arquivo de índice é armazenada no arquivo index.asd
         (representação binária da assinatura digital) */
-        File fileAsd = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(INDEX_ASD_PATH).toString());
+        File fileAsd = new File("./".replace("/", System.getProperty("file.separator")) + INDEX_ASD_PATH);
         byte[] signatureBytes = null;
 
         try (FileInputStream fis = new FileInputStream(fileAsd)) {
@@ -319,7 +339,7 @@ public class KeyValidator {
         /*deve-se
         decriptar o arquivo de índice da pasta fornecida (cifra AES, modo ECB e enchimento PKCS5),
         chamado index.enc */
-        File file = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(INDEX_ENC_PATH).toString());
+        File file = new File("./".replace("/", System.getProperty("file.separator")) + INDEX_ENC_PATH);
         byte[] indexencDecripted = null;
 
         try (FileInputStream fis = new FileInputStream(file)) {
@@ -337,7 +357,7 @@ public class KeyValidator {
         }
 
             
-            Cofre.addLogToDB(login, "7005");
+        Cofre.addLogToDB(login, "7005");
         
         //chave publica do usuario administrador 
         PublicKey adminPublicKey = getAdminPublicKey();
@@ -355,30 +375,13 @@ public class KeyValidator {
             Cofre.addLogToDB(login, "7008");
             }
         } 
-        
         catch (Exception e) {
             System.out.println("Erro ao validar a assinatura digital: " + e.getMessage());
         }
 
             
-            Cofre.addLogToDB(login, "7006");
+        Cofre.addLogToDB(login, "7006");
 
-
-        /*3. e listar o
-        conteúdo do arquivo de índice apresentando APENAS os atributos dos arquivos (nome código,
-        nome, dono e grupo) do usuário ou do grupo do usuário*/
-
-        /*Formato : O arquivo de índice decriptado possui zero ou mais linhas
-        formatadas da seguinte forma:
-        NOME_CODIGO_DO_ARQUIVO<SP>NOME_SECRETO_DO_ARQUIVO<SP>DONO_ARQUIVO
-        <SP><GRUPO_ARQUIVO><EOL>
-        Onde:
-        NOME_CODIGO_DO_ARQUIVO: caracteres alfanuméricos (nome código do arquivo).
-        NOME_SECRETO_DO_ARQUIVO: caracteres alfanuméricos (nome original do arquivo).
-        DONO_ARQUIVO: caracteres alfanuméricos (atributo do arquivo).
-        GRUPO_ARQUIVO: caracteres alfanuméricos (atributo do arquivo).
-        <SP> = caractere espaço em branco.
-        <EOL> = caractere nova linha (\n). */
 
         List<String[]> arquivos = new ArrayList<>();
         try{
@@ -412,15 +415,17 @@ public class KeyValidator {
 
 
         catch(Exception e) {
-            System.out.println("Erro ao listar o conteudo do arquivo de indice: " + e.getMessage());
+            // System.out.println("Erro ao listar o conteudo do arquivo de indice: " + e.getMessage());
+            Cofre.showErrorMessage("Erro ao listar o conteudo do arquivo de indice: " + e.getMessage());
             return null;
         }
 
     }
     
-    public boolean abrirArquivoSecreto(String nomeSecreto, String donoArquivo, String login, String fraseSecretaUsuario, String ext) { 
+    public boolean abrirArquivoSecreto(String nomeSecreto, String donoArquivo, String login, String fraseSecretaUsuario, String ext, String folder_path) { 
         if(!donoArquivo.equals(login)) {
-            System.out.println("Usuario não tem permissão de acesso ao arquivo");
+            // System.out.println("Usuario não tem permissão de acesso ao arquivo");
+            Cofre.showErrorMessage("Usuario não tem permissão de acesso ao arquivo");
             
             Cofre.addLogToDB(login, "7012");
             return false;
@@ -441,10 +446,11 @@ public class KeyValidator {
             
             Cofre.addLogToDB(login, "6006");
             System.out.println("123 ####### Falha ao carregar a chave privada do usuario.");
+
             return false;
         }
 
-        String caminhoArquivoEnv = "Files\\" + nomeSecreto + ".env";
+        String caminhoArquivoEnv = folder_path + nomeSecreto + ".env";
         File fileEnv = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoEnv).toString());
         byte[] semente = null;
         SecretKey aesKey = null;
@@ -466,27 +472,28 @@ public class KeyValidator {
             aesKey = keyGen.generateKey();
         }
         catch (Exception e) {
-            System.out.println("(abrir Arquivo) ### Falha ao decriptar o arquivo de envelope digital: " + e.getMessage()); 
+            // System.out.println("(abrir Arquivo) ### Falha ao decriptar o arquivo de envelope digital: " + e.getMessage()); 
+            Cofre.showErrorMessage("Falha ao decriptar o arquivo de envelope digital: " + e.getMessage());
             return false;
         }
 
         /*a assinatura digital do arquivo secreto é armazenada no arquivo <NOME_CODIGO_DO_ARQUIVO>.asd
         (representação binária da assinatura digital) */
-        String caminhoArquivoAsd = "Files\\" + nomeSecreto + ".asd";
+        String caminhoArquivoAsd = folder_path + nomeSecreto + ".asd";
         File fileAsd = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoAsd).toString());
         byte[] signatureBytes = null;
+
         try (FileInputStream fis = new FileInputStream(fileAsd)) {
             signatureBytes = new byte[(int) fileAsd.length()];
             fis.read(signatureBytes);
         } 
-        
-        catch (IOException e) {
+        catch (Exception e) {
             System.out.println("Falha ao ler o arquivo de assinatura digital: " + e.getMessage());
             return false; 
         }
 
         //decriptar o arquivo secreto
-        String caminhoArquivo = "Files\\" + nomeSecreto + ".enc";
+        String caminhoArquivo = folder_path + nomeSecreto + ".enc";
         File file = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivo).toString());
         byte[] arquivoEncDecripted = null;
         try (FileInputStream fis = new FileInputStream(file)) {
@@ -498,31 +505,54 @@ public class KeyValidator {
             cipher.init(Cipher.DECRYPT_MODE, aesKey); // use a chave AES gerada da semente!
             arquivoEncDecripted = cipher.doFinal(arquivoEnc);
         }
-
         catch(Exception e) {
-            System.out.println("Falha ao decriptar o arquivo secreto: " + e.getMessage()); 
+            // System.out.println("Falha ao decriptar o arquivo secreto: " + e.getMessage());
+            Cofre.showErrorMessage("Falha ao decriptar o arquivo secreto: " + e.getMessage());
             
             Cofre.addLogToDB(login, "7015");
             return false;
         }
 
             
-            Cofre.addLogToDB(login, "7014");
+        Cofre.addLogToDB(login, "7014");
+
+        //chave publica do usuario administrador 
+        PublicKey userPublicKey = getUserPublicKey(login);
+
+        //validando a assinatura digital
+        try {
+            Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
+            signature.initVerify(userPublicKey);
+            signature.update(arquivoEncDecripted);
+            boolean isValid = signature.verify(signatureBytes);
+
+            if (!isValid) {
+                // System.out.println("Assinatura digital inválida.");
+                Cofre.showErrorMessage("Assinatura digital inválida.");
+                Cofre.addLogToDB(login, "7008");
+                return false;
+            }
+        } 
+        catch (Exception e) {
+            System.out.println("Erro ao validar a assinatura digital: " + e.getMessage());
+        }
 
         
         //gravando o arquivo decriptado em um novo arquivo com o nome secreto
-        String caminhoArquivoDecriptado = "Files\\" + ext;
+        String caminhoArquivoDecriptado = folder_path + ext;
         File fileDecriptado = new File("./".replace("/", System.getProperty("file.separator")) + Paths.get(caminhoArquivoDecriptado).toString());
         try (FileOutputStream fos = new FileOutputStream(fileDecriptado, false)) {
             // String conteudo = new String(arquivoEncDecripted, "UTF-8");
             fos.write(arquivoEncDecripted);
-            System.out.println("Arquivo decriptado (texto) com sucesso: " + fileDecriptado.getAbsolutePath());
+            // System.out.println("Arquivo decriptado (texto) com sucesso: " + fileDecriptado.getAbsolutePath());
+            Cofre.showMessage("Arquivo decriptado com sucesso: " + fileDecriptado.getAbsolutePath());
             
             Cofre.addLogToDB(login, "7013");
             return true;
         } 
         catch (IOException e) {
-            System.out.println("Falha ao gravar o arquivo decriptado: " + e.getMessage());
+            // System.out.println("Falha ao gravar o arquivo decriptado: " + e.getMessage());
+            Cofre.showErrorMessage("Falha ao gravar o arquivo decriptado: " + e.getMessage());
             return false;
         }
     }
