@@ -26,11 +26,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import javax.swing.JOptionPane;
 
 public class Cofre{
+    private static final String TIMEZONE = "America/Sao_Paulo";
+    private static final long BLOCKED_TIME_LIMIT = 2; // minutos
+
     private static DB db;
     private static String adminPassphrase;
     private static String folder_path;
@@ -38,6 +42,12 @@ public class Cofre{
 
     public static void main(String[] args) throws Exception {        
         db = new DB();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutdown hook triggered: Cleaning up before exit.");
+            // encerrarSistema();
+            updateBlockedUsersDatesOnClose();
+        }));
         
         addLogToDB("1001"); // Sistema iniciado
 
@@ -45,28 +55,39 @@ public class Cofre{
             // System.out.println("Admin já cadastrado.");
 
             addLogToDB("1006");
+            blockedUsersDates = db.getBlockedUsers();
+            
+            if (blockedUsersDates == null) {
+                blockedUsersDates = new HashMap<>();
+            }
+
+            for (Map.Entry<String, LocalDateTime> entry : blockedUsersDates.entrySet()) {
+                String email = entry.getKey();
+                LocalDateTime blockedDateTime = entry.getValue();
+                long minutesBlocked = ChronoUnit.MINUTES.between(blockedDateTime, LocalDateTime.now(ZoneId.of(TIMEZONE)));
+                
+                if (minutesBlocked >= BLOCKED_TIME_LIMIT) {
+                    unblockUser(email);
+                }
+            }
+
             showLoginScreen();
         } 
-        
         else {
-            // System.out.println("Admin não cadastrado.");
+            javax.swing.JPasswordField pwd = new javax.swing.JPasswordField();
+            int action = JOptionPane.showConfirmDialog(null, pwd, "Digite a frase secreta do admin:", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (action == JOptionPane.OK_OPTION) {
+              adminPassphrase = new String(pwd.getPassword());
+            } 
             
-            addLogToDB( "admin@inf1416.puc-rio.br", "1005");
+            addLogToDB("1005");
             TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, getGrupos());
             tela.setVisible(true);
         }
-        // TelaCadastro tela = new TelaCadastro("admin", "admins", "Admin", 1, getGrupos());
-        // tela.setVisible(true);
-
-        // TelaLogin1 tela1 = new TelaLogin1();
-        // tela1.setVisible(true);
-
-        // TelaLogin2 tela = new TelaLogin2("admin@inf1416.puc-rio.br");
-        // tela.setVisible(true);
     }
 
     public static void blockUser(String email) {
-        java.time.LocalDateTime today = java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        LocalDateTime today = LocalDateTime.now(ZoneId.of(TIMEZONE));
         blockedUsersDates.put(email, today);
 
         showLoginScreen();
@@ -79,11 +100,11 @@ public class Cofre{
     public static boolean isUserBlocked(String email) {
         if (blockedUsersDates.containsKey(email))
         {
-            java.time.LocalDateTime blockedDateTime = blockedUsersDates.get(email);
-            java.time.LocalDateTime currentDateTime = java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
-            long minutesBlocked = java.time.temporal.ChronoUnit.MINUTES.between(blockedDateTime, currentDateTime);
+            LocalDateTime blockedDateTime = blockedUsersDates.get(email);
+            LocalDateTime currentDateTime = LocalDateTime.now(ZoneId.of(TIMEZONE));
+            long minutesBlocked = ChronoUnit.MINUTES.between(blockedDateTime, currentDateTime);
             
-            if (minutesBlocked >= 2) {
+            if (minutesBlocked >= BLOCKED_TIME_LIMIT) {
               unblockUser(email);
               return false; // Usuário desbloqueado após 2 minutos
             }
@@ -200,11 +221,14 @@ public class Cofre{
         }
     }
 
-    public static void showMenuPrincipal(User user) {
-      addLogToDB( user.getEmail(), "1003");
-        
-        addLogToDB( user.getEmail(), "5001");
+    public static void updateAccessCount(User user) {
         db.updateAccessCount(user);
+    }
+
+    public static void showMenuPrincipal(User user) {
+        addLogToDB( user.getEmail(), "1003");
+        addLogToDB( user.getEmail(), "5001");
+
         TelaPrincipal tela = new TelaPrincipal(user);
         tela.setVisible(true);
     }
@@ -317,9 +341,15 @@ public class Cofre{
         return privatekey;
     }
 
+    public static String getUserCert(String email) {
+        String cert = db.getUserCert(email);
+
+        return cert;
+    }
+
     public static void addLogToDB(String message_id) {
-      LocalDate date = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
-      LocalTime time = LocalTime.now(ZoneId.of("America/Sao_Paulo"));
+      LocalDate date = LocalDate.now(ZoneId.of(TIMEZONE));
+      LocalTime time = LocalTime.now(ZoneId.of(TIMEZONE));
       String dateTime = date + " " + time;
 
       System.out.println("Data e hora: " + dateTime + " - Mensagem: " + message_id);
@@ -328,8 +358,8 @@ public class Cofre{
     }
 
     public static void addLogToDB(String email, String message_id) {
-      LocalDate date = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
-      LocalTime time = LocalTime.now(ZoneId.of("America/Sao_Paulo"));
+      LocalDate date = LocalDate.now(ZoneId.of(TIMEZONE));
+      LocalTime time = LocalTime.now(ZoneId.of(TIMEZONE));
       String dateTime = date + " " + time;
 
       System.out.println("Data e hora: " + dateTime + " - Mensagem: " + message_id + " - Email: " + email);
@@ -340,6 +370,30 @@ public class Cofre{
     public static void encerrarSistema() {
         adminPassphrase = "";
         folder_path = "";
+
         System.exit(0);
+    }
+
+    public static void updateBlockedUsersDatesOnClose() {
+
+        for (Map.Entry<String, LocalDateTime> entry : blockedUsersDates.entrySet()) {
+            String email = entry.getKey();
+            LocalDateTime blockedDateTime = entry.getValue();
+            long minutesBlocked = ChronoUnit.MINUTES.between(blockedDateTime, LocalDateTime.now(ZoneId.of(TIMEZONE)));
+            
+            if (minutesBlocked >= BLOCKED_TIME_LIMIT) {
+                unblockUser(email);
+            }
+        }
+
+        db.updateBlockedUsers(blockedUsersDates);
+    }
+
+    public static void showMessage(String message) {
+        JOptionPane.showMessageDialog(null, message);
+    }
+
+    public static void showErrorMessage(String message) {
+        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 }

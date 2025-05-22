@@ -8,6 +8,10 @@ package CofreDigital.DB;
 import CofreDigital.SecurityEncryption.Base32;
 import CofreDigital.Users.User;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -86,6 +90,7 @@ public class DB {
             "grupo TEXT NOT NULL, " +
             "total_acessos INT NOT NULL," +
             "totalConsultas INT NOT NULL," + 
+            "lastBlockedDateTime TEXT," +
             "FOREIGN KEY (KID) REFERENCES Chaveiro(KID) " +
             ");";
 
@@ -159,6 +164,39 @@ public class DB {
         }
     }
 
+    public Map<String, LocalDateTime> getBlockedUsers() {
+        Map<String, LocalDateTime> blockedUsers = new HashMap<>();
+        String query = "SELECT email, lastBlockedDateTime FROM Usuarios WHERE lastBlockedDateTime IS NOT NULL";
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                String email = rs.getString("email");
+                LocalDateTime lastBlockedDateTime = LocalDateTime.parse(rs.getString("lastBlockedDateTime"));
+                blockedUsers.put(email, lastBlockedDateTime);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+
+        return blockedUsers;
+    }
+
+    public void updateBlockedUsers(Map<String, LocalDateTime> blockedUsers) {
+        String query = "UPDATE Usuarios SET lastBlockedDateTime = ? WHERE email = ?";
+
+        try (Connection con = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = con.prepareStatement(query)) {
+            for (Map.Entry<String, LocalDateTime> entry : blockedUsers.entrySet()) {
+                pstmt.setString(1, entry.getValue().toString());
+                pstmt.setString(2, entry.getKey());
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
 
     private boolean isMessagesTableEmpty(Connection con) {
         String query = "SELECT EXISTS (SELECT 1 FROM Mensagens LIMIT 1)";

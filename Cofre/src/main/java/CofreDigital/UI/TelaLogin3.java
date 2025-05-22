@@ -62,6 +62,7 @@ public class TelaLogin3 extends JFrame{
                 // Call the method to validate the TOTP code
                 if (Cofre.validaTOTP(user, totpCode))
                 {
+                    Cofre.updateAccessCount(user);
                     Cofre.showMenuPrincipal(user);
                     dispose(); // Fecha a tela de login
                 }
@@ -76,7 +77,7 @@ public class TelaLogin3 extends JFrame{
                     }
                 }
             } else {
-                System.out.println("O código TOTP deve ter " + TOTPCodeSize + " dígitos.");
+                JOptionPane.showMessageDialog(this, "O código TOTP deve ter " + TOTPCodeSize + " dígitos.");
             }
         });
 

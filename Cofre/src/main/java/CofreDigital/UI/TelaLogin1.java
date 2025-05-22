@@ -92,7 +92,7 @@ public class TelaLogin1 extends JFrame {
                 {
                     if (Cofre.isUserBlocked(loginName))
                     {
-                        JOptionPane.showMessageDialog(null, "Usuario bloqueado. Entre em contato com o administrador.", "Erro", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "Usuario bloqueado.", "Erro", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     
